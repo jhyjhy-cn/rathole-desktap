@@ -36,3 +36,6 @@ rathole.zip
 
 # User data (if any stored locally during dev)
 *.log
+
+# Trae AI
+.trae/
