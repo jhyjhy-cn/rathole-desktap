@@ -39,3 +39,9 @@ rathole.zip
 
 # Trae AI
 .trae/
+
+# Build outputs
+*.js.d.ts
+vite.config.js
+vite.config.d.ts
+*.tsbuildinfo

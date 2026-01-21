@@ -10,12 +10,7 @@ const services = computed(() => {
     const list: any[] = []
     if (currentConfig.value?.client?.services) {
         Object.entries(currentConfig.value.client.services).forEach(([name, svc]: [string, any]) => {
-            list.push({ name, type: 'client', ...svc })
-        })
-    }
-    if (currentConfig.value?.server?.services) {
-        Object.entries(currentConfig.value.server.services).forEach(([name, svc]: [string, any]) => {
-            list.push({ name, type: 'server', ...svc })
+            list.push({ name, ...svc })
         })
     }
     return list
@@ -32,34 +27,28 @@ function editService(svc: any) {
 }
 
 function addService() {
-    editingService.value = { name: '', type: 'client', token: '', local_addr: '127.0.0.1:80' }
+    editingService.value = { name: '', local_addr: '127.0.0.1:80' }
     isNew.value = true
     dialogVisible.value = true
 }
 
 function saveService() {
-    // Update store config object (deep merge/replace)
-    // This is a simplified implementation. Real one needs deep reactivity or utility.
     const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}))
-    
-    if (editingService.value.type === 'client') {
-        if (!cfg.client) cfg.client = {}
-        if (!cfg.client.services) cfg.client.services = {}
-        cfg.client.services[editingService.value.name] = {
-            token: editingService.value.token,
-            local_addr: editingService.value.local_addr
-        }
-    } else {
-        if (!cfg.server) cfg.server = {}
-        if (!cfg.server.services) cfg.server.services = {}
-        cfg.server.services[editingService.value.name] = {
-            token: editingService.value.token,
-            bind_addr: editingService.value.bind_addr
-        }
+    if (!cfg.client) cfg.client = {}
+    if (!cfg.client.services) cfg.client.services = {}
+    cfg.client.services[editingService.value.name] = {
+        local_addr: editingService.value.local_addr
     }
-    
     store.updateFromObject(cfg)
     dialogVisible.value = false
+}
+
+function deleteService(name: string) {
+    const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}))
+    if (cfg.client?.services?.[name]) {
+        delete cfg.client.services[name]
+        store.updateFromObject(cfg)
+    }
 }
 </script>
 
@@ -69,7 +58,7 @@ function saveService() {
         <h2>{{ $t('proxy.title') }}</h2>
         <el-button type="primary" @click="addService">{{ $t('proxy.addService') }}</el-button>
     </div>
-    
+
     <div class="service-list">
         <el-empty v-if="services.length === 0" :description="$t('proxy.noServices')" />
         <el-row :gutter="20">
@@ -78,16 +67,15 @@ function saveService() {
                     <template #header>
                         <div class="card-header">
                             <span>{{ svc.name }}</span>
-                            <el-tag size="small">{{ svc.type }}</el-tag>
+                            <el-tag size="small" type="success">{{ $t('proxy.client') }}</el-tag>
                         </div>
                     </template>
                     <div class="svc-details">
-                        <p v-if="svc.local_addr">{{ $t('proxy.local') }}: {{ svc.local_addr }}</p>
-                        <p v-if="svc.bind_addr">{{ $t('proxy.bind') }}: {{ svc.bind_addr }}</p>
-                        <p>{{ $t('proxy.token') }}: {{ svc.token ? '******' : $t('proxy.none') }}</p>
+                        <p>{{ $t('proxy.address') }}: {{ svc.local_addr }}</p>
                     </div>
                     <div class="actions">
                         <el-button size="small" @click="editService(svc)">{{ $t('common.edit') }}</el-button>
+                        <el-button size="small" type="danger" @click="deleteService(svc.name)">{{ $t('common.delete') }}</el-button>
                     </div>
                 </el-card>
             </el-col>
@@ -99,20 +87,8 @@ function saveService() {
             <el-form-item :label="$t('proxy.name')">
                 <el-input v-model="editingService.name" :disabled="!isNew" />
             </el-form-item>
-            <el-form-item :label="$t('proxy.type')">
-                <el-radio-group v-model="editingService.type" :disabled="!isNew">
-                    <el-radio-button label="client">{{ $t('proxy.client') }}</el-radio-button>
-                    <el-radio-button label="server">{{ $t('proxy.server') }}</el-radio-button>
-                </el-radio-group>
-            </el-form-item>
-            <el-form-item :label="$t('proxy.token')">
-                <el-input v-model="editingService.token" type="password" show-password />
-            </el-form-item>
-            <el-form-item :label="$t('proxy.address')" v-if="editingService.type === 'client'">
+            <el-form-item :label="$t('proxy.address')">
                 <el-input v-model="editingService.local_addr" placeholder="127.0.0.1:80" />
-            </el-form-item>
-            <el-form-item :label="$t('proxy.bindAddr')" v-if="editingService.type === 'server'">
-                <el-input v-model="editingService.bind_addr" placeholder="0.0.0.0:2333" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -138,5 +114,9 @@ function saveService() {
 .actions {
     margin-top: 10px;
     text-align: right;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
 }
 </style>
+
