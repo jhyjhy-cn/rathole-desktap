@@ -15,7 +15,7 @@
 <style scoped>
 .about {
     text-align: center;
-    padding-top: 50px;
+    padding-top: 20px;
 }
 .logo {
     width: 100px;

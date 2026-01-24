@@ -70,6 +70,7 @@ export default {
     clear: "清空",
   },
   about: {
+    title: "关于",
     description: "Rathole 反向代理的 GUI 客户端。",
     core: "Rathole 核心",
     inspired: "致敬 Frpc-Desktop",

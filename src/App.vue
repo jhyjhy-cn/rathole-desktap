@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import Sidebar from "./components/Sidebar.vue";
+import PageHeader from "./components/PageHeader.vue";
 </script>
 
 <template>
     <el-container class="layout-container">
-        <el-aside width="auto">
+        <el-aside width="60px">
             <Sidebar />
         </el-aside>
         <el-container>
-            <el-header> </el-header>
+            <el-header>
+                <PageHeader>
+                    <template #actions>
+                        <router-view name="header"></router-view>
+                    </template>
+                </PageHeader>
+            </el-header>
             <el-main>
                 <router-view v-slot="{ Component }">
                     <transition name="fade" mode="out-in">

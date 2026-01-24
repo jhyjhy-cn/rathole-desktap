@@ -70,6 +70,7 @@ export default {
     clear: "Clear",
   },
   about: {
+    title: "About",
     description: "A GUI for Rathole Reverse Proxy.",
     core: "Rathole Core",
     inspired: "Inspired by Frpc-Desktop",

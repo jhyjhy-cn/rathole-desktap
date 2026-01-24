@@ -48,6 +48,7 @@ async function startDownload() {
 .download-page {
     max-width: 600px;
     margin: 0 auto;
+    padding-top: 0;
 }
 .result {
     margin-top: 20px;

@@ -93,6 +93,7 @@ async function selectAndStart() {
   align-items: center;
   justify-content: center;
   background: var(--el-bg-color-page);
+  margin-top: -60px;
 }
 
 .container {

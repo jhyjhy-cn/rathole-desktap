@@ -60,13 +60,12 @@ function handleLocaleChange(val: string) {
 
 <template>
   <div class="settings-page">
-    <div class="header">
-        <h2>{{ $t('settings.title') }}</h2>
-        <div class="actions">
+    <router-view name="header">
+        <div class="header-actions">
             <el-button @click="loadFile">{{ $t('common.load') }}</el-button>
             <el-button type="primary" @click="saveFile">{{ $t('common.save') }}</el-button>
         </div>
-    </div>
+    </router-view>
 
     <el-card class="settings-card">
         <template #header>
@@ -139,10 +138,9 @@ function handleLocaleChange(val: string) {
     flex-direction: column;
     gap: 20px;
 }
-.header {
+.header-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 12px;
 }
 .settings-card {
     flex: 1;

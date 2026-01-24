@@ -54,10 +54,9 @@ function deleteService(name: string) {
 
 <template>
   <div class="proxy-page">
-    <div class="header">
-        <h2>{{ $t('proxy.title') }}</h2>
+    <router-view name="header">
         <el-button type="primary" @click="addService">{{ $t('proxy.addService') }}</el-button>
-    </div>
+    </router-view>
 
     <div class="service-list">
         <el-empty v-if="services.length === 0" :description="$t('proxy.noServices')" />
@@ -100,11 +99,9 @@ function deleteService(name: string) {
 </template>
 
 <style scoped>
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+.proxy-page {
+    padding: 20px;
+    padding-top: 0;
 }
 .card-header {
     display: flex;

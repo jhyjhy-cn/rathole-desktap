@@ -18,10 +18,9 @@ watch(logs, () => {
 
 <template>
   <div class="logs-page">
-    <div class="header">
-        <h2>{{ $t('logs.title') }}</h2>
+    <router-view name="header">
         <el-button @click="logs = []">{{ $t('logs.clear') }}</el-button>
-    </div>
+    </router-view>
     <div class="log-container" ref="logContainer">
         <div v-for="(log, index) in logs" :key="index" class="log-line">
             {{ log }}
@@ -35,12 +34,6 @@ watch(logs, () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-}
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
 }
 .log-container {
     flex: 1;
