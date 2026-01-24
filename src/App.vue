@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Sidebar from "./components/Sidebar.vue";
-import PageHeader from "./components/PageHeader.vue";
 </script>
 
 <template>
@@ -8,22 +7,13 @@ import PageHeader from "./components/PageHeader.vue";
         <el-aside width="60px">
             <Sidebar />
         </el-aside>
-        <el-container>
-            <el-header style="padding: 0">
-                <PageHeader>
-                    <template #actions>
-                        <router-view name="header"></router-view>
-                    </template>
-                </PageHeader>
-            </el-header>
-            <el-main style="padding: 16px">
-                <router-view v-slot="{ Component }">
-                    <transition name="fade" mode="out-in">
-                        <component :is="Component" />
-                    </transition>
-                </router-view>
-            </el-main>
-        </el-container>
+        <el-main class="main-content">
+            <router-view v-slot="{ Component }">
+                <transition name="fade" mode="out-in">
+                    <component :is="Component" />
+                </transition>
+            </router-view>
+        </el-main>
     </el-container>
 </template>
 
@@ -31,15 +21,15 @@ import PageHeader from "./components/PageHeader.vue";
 .layout-container {
     height: 100vh;
 }
-.el-header {
-    background-color: var(--el-bg-color);
-    border-bottom: 1px solid var(--el-border-color);
-    display: flex;
-    align-items: center;
-}
 .el-aside {
     background-color: var(--el-bg-color-overlay);
     border-right: 1px solid var(--el-border-color);
+}
+.main-content {
+    height: 100%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 .fade-enter-active,
 .fade-leave-active {

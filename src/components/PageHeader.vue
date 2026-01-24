@@ -75,7 +75,7 @@ const pageConfig = computed(() => {
             </div>
         </div>
         <div class="header-right">
-            <slot></slot>
+            <slot name="header"></slot>
         </div>
     </div>
 </template>
@@ -85,25 +85,32 @@ const pageConfig = computed(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 100%;
+    height: 60px;
     width: 100%;
-    padding: 0 16px;
+    padding: 0 24px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--el-border-color);
+    background: var(--el-bg-color);
+    flex-shrink: 0;
 }
 
 .header-left {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
 }
 
 .page-icon {
-    font-size: 22px;
+    font-size: 20px;
     color: var(--el-color-primary);
+    display: flex;
+    align-items: center;
 }
 
 .page-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--el-text-color-primary);
 }
@@ -138,5 +145,6 @@ const pageConfig = computed(() => {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0;
 }
 </style>

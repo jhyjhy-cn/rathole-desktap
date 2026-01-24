@@ -7,6 +7,7 @@ import { open, save } from '@tauri-apps/plugin-dialog'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { Moon, Sunny } from '@element-plus/icons-vue'
+import PageHeader from '../components/PageHeader.vue'
 
 const store = useConfigStore()
 const themeStore = useThemeStore()
@@ -60,12 +61,14 @@ function handleLocaleChange(val: string) {
 
 <template>
   <div class="settings-page">
-    <router-view name="header">
-        <div class="header-actions">
-            <el-button @click="loadFile">{{ $t('common.load') }}</el-button>
-            <el-button type="primary" @click="saveFile">{{ $t('common.save') }}</el-button>
-        </div>
-    </router-view>
+    <PageHeader>
+      <template #header>
+        <el-button @click="loadFile">{{ $t('common.load') }}</el-button>
+        <el-button type="primary" @click="saveFile">{{ $t('common.save') }}</el-button>
+      </template>
+    </PageHeader>
+
+    <div class="settings-content">
 
     <el-card class="settings-card">
         <template #header>
@@ -128,6 +131,7 @@ function handleLocaleChange(val: string) {
             </div>
         </div>
     </el-card>
+    </div>
   </div>
 </template>
 
@@ -136,12 +140,14 @@ function handleLocaleChange(val: string) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
-.header-actions {
-    display: flex;
-    gap: 12px;
+
+.settings-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
 }
+
 .settings-card {
     flex: 1;
     overflow: auto;

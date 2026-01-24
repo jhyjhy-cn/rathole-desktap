@@ -2,6 +2,7 @@
 import { useConfigStore } from '../stores/config'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import PageHeader from '../components/PageHeader.vue'
 
 const store = useConfigStore()
 const { currentConfig } = storeToRefs(store)
@@ -54,13 +55,16 @@ function deleteService(name: string) {
 
 <template>
   <div class="proxy-page">
-    <router-view name="header">
+    <PageHeader>
+      <template #header>
         <el-button type="primary" @click="addService">{{ $t('proxy.addService') }}</el-button>
-    </router-view>
+      </template>
+    </PageHeader>
 
-    <div class="service-list">
+    <div class="proxy-content">
+      <div class="service-list">
         <el-empty v-if="services.length === 0" :description="$t('proxy.noServices')" />
-        <el-row :gutter="20">
+        <el-row :gutter="20" v-else>
             <el-col :span="12" v-for="svc in services" :key="svc.name" style="margin-bottom: 20px;">
                 <el-card shadow="hover">
                     <template #header>
@@ -79,9 +83,9 @@ function deleteService(name: string) {
                 </el-card>
             </el-col>
         </el-row>
-    </div>
+      </div>
 
-    <el-dialog v-model="dialogVisible" :title="isNew ? $t('proxy.addService') : $t('proxy.editService')">
+      <el-dialog v-model="dialogVisible" :title="isNew ? $t('proxy.addService') : $t('proxy.editService')">
         <el-form :model="editingService" label-width="100px">
             <el-form-item :label="$t('proxy.name')">
                 <el-input v-model="editingService.name" :disabled="!isNew" />
@@ -94,15 +98,24 @@ function deleteService(name: string) {
             <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
             <el-button type="primary" @click="saveService">{{ $t('common.confirm') }}</el-button>
         </template>
-    </el-dialog>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .proxy-page {
-    padding: 20px;
-    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
+
+.proxy-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -114,6 +127,9 @@ function deleteService(name: string) {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+}
+
+.service-list {
 }
 </style>
 

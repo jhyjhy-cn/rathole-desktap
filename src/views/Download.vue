@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
+import PageHeader from "../components/PageHeader.vue";
 
 interface Release {
     name: string;
@@ -73,12 +74,12 @@ async function startDownload(release: Release) {
 
 function formatSize(bytes: number) {
     if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " MB";
     return (bytes / 1024 / 1024).toFixed(2) + " MB";
 }
 
 function formatDate(date: string) {
-    return new Date(date).toLocaleDateString();
+    return new Date(date).toLocaleDateString("zh-CN");
 }
 
 function copyLink(url: string) {
@@ -88,93 +89,118 @@ function copyLink(url: string) {
 </script>
 
 <template>
-    <div class="download-page">
-        <el-row :gutter="20" v-loading="loading">
-            <el-col
-                :span="12"
-                v-for="release in releases"
-                :key="release.name"
-                class="release-col"
-            >
-                <el-card class="release-card" shadow="hover">
-                    <div class="card-header">
-                        <span class="version-name">{{ release.name }}</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="info-item">
-                            <span class="label">{{ t("download.size") }}:</span>
-                            <span class="value">{{
-                                formatSize(release.size)
-                            }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label"
-                                >{{ t("download.downloads") }}:</span
-                            >
-                            <span class="value">{{
-                                release.downloads.toLocaleString()
-                            }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="label"
-                                >{{ t("download.releaseDate") }}:</span
-                            >
-                            <span class="value">{{
-                                formatDate(release.published_at)
-                            }}</span>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <el-button
-                            type="primary"
-                            :loading="downloading === release.name"
-                            @click="startDownload(release)"
-                            class="download-btn"
-                        >
-                            {{ t("download.downloadBtn") }}
-                        </el-button>
-                        <el-button
-                            link
-                            @click="copyLink(release.download_url)"
-                            class="copy-btn"
-                        >
-                            {{ t("download.copyLink") }}
-                        </el-button>
-                    </div>
-                </el-card>
-            </el-col>
-        </el-row>
+<div class="download-page">
+  <PageHeader>
+    <template #header>
+      <el-button type="primary" @click="fetchReleases">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+      <el-button type="primary">
+        <el-icon><Upload /></el-icon>
+        导入
+      </el-button>
+    </template>
+  </PageHeader>
 
-        <el-empty
-            v-if="!loading && releases.length === 0"
-            :description="$t('common.loading')"
-        />
-    </div>
+  <div class="download-content">
+    <el-row :gutter="20" v-loading="loading">
+        <el-col
+            :span="12"
+            v-for="release in releases"
+            :key="release.name"
+            class="release-col"
+        >
+            <div class="release-card">
+                <div class="card-header">
+                    <span class="version-name">{{ release.name }}</span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="info-label">{{ t("download.size") }}:</span>
+                        <span class="info-value size-badge">{{ formatSize(release.size) }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">{{ t("download.downloads") }}:</span>
+                        <span class="info-value">{{ release.downloads.toLocaleString() }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">{{ t("download.releaseDate") }}:</span>
+                        <span class="info-value">{{ formatDate(release.published_at) }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-actions">
+                    <el-button
+                        type="primary"
+                        :loading="downloading === release.name"
+                        @click="startDownload(release)"
+                        class="download-btn"
+                    >
+                        <el-icon><Download /></el-icon>
+                        {{ t("download.downloadBtn") }}
+                    </el-button>
+                    
+                    <el-button
+                        link
+                        @click="copyLink(release.download_url)"
+                        class="copy-btn"
+                    >
+                        <el-icon><Link /></el-icon>
+                        {{ t("download.copyLink") }}
+                    </el-button>
+                </div>
+            </div>
+        </el-col>
+    </el-row>
+
+    <el-empty
+        v-if="!loading && releases.length === 0"
+        :description="$t('common.loading')"
+    />
+  </div>
+</div>
 </template>
 
 <style scoped>
 .download-page {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.download-content {
+    flex: 1;
     padding: 20px;
-    padding-top: 0;
+    overflow-y: auto;
 }
 
 .release-col {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .release-card {
-    height: 100%;
+    border: 1px solid var(--el-border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
     transition: all 0.3s;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
 }
 
 .release-card:hover {
-    transform: translateY(-4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
-    border-bottom: 1px solid var(--el-border-color-lighter);
-    padding-bottom: 12px;
-    margin-bottom: 12px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .version-name {
@@ -184,41 +210,70 @@ function copyLink(url: string) {
 }
 
 .card-body {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 8px;
 }
 
-.info-item {
+.info-row {
     display: flex;
     justify-content: space-between;
     font-size: 13px;
+    margin-bottom: 4px;
 }
 
-.label {
-    color: var(--el-text-color-secondary);
-}
-
-.value {
-    color: var(--el-text-color-primary);
+.info-label {
+    color: #6b7280;
     font-weight: 500;
+}
+
+.info-value {
+    color: #374151;
+    font-weight: 500;
+}
+
+.size-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
 }
 
 .card-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--el-border-color-lighter);
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
 }
 
 .download-btn {
     flex: 1;
     margin-right: 8px;
+    background-color: var(--el-color-primary);
+    border-color: var(--el-color-primary);
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+.download-btn:hover {
+    background-color: var(--el-color-primary-light-3);
+    border-color: var(--el-color-primary-light-3);
 }
 
 .copy-btn {
     flex-shrink: 0;
+    color: var(--el-color-primary);
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+.copy-btn:hover {
+    color: var(--el-color-primary-light-3);
 }
 </style>

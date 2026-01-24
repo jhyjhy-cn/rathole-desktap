@@ -2,6 +2,7 @@
 import { useRatholeStore } from '../stores/rathole'
 import { storeToRefs } from 'pinia'
 import { ref, watch, nextTick } from 'vue'
+import PageHeader from '../components/PageHeader.vue'
 
 const store = useRatholeStore()
 const { logs } = storeToRefs(store)
@@ -18,9 +19,12 @@ watch(logs, () => {
 
 <template>
   <div class="logs-page">
-    <router-view name="header">
+    <PageHeader>
+      <template #header>
         <el-button @click="logs = []">{{ $t('logs.clear') }}</el-button>
-    </router-view>
+      </template>
+    </PageHeader>
+
     <div class="log-container" ref="logContainer">
         <div v-for="(log, index) in logs" :key="index" class="log-line">
             {{ log }}
@@ -35,8 +39,10 @@ watch(logs, () => {
     display: flex;
     flex-direction: column;
 }
+
 .log-container {
     flex: 1;
+    margin: 20px;
     background: #1e1e1e;
     padding: 10px;
     border-radius: 4px;
@@ -45,6 +51,7 @@ watch(logs, () => {
     white-space: pre-wrap;
     word-break: break-all;
 }
+
 .log-line {
     color: #dcdcdc;
     margin-bottom: 2px;
