@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import {
     Menu as IconMenu,
     Setting,
@@ -44,7 +44,7 @@ const menuItems = [
     { index: "3", icon: Download, title: "sidebar.download" },
     { index: "4", icon: Setting, title: "sidebar.settings" },
     { index: "5", icon: Monitor, title: "sidebar.logs" },
-    { index: "6", icon: InfoFilled, title: "sidebar.about" }
+    { index: "6", icon: InfoFilled, title: "sidebar.about" },
 ];
 </script>
 
@@ -132,7 +132,8 @@ const menuItems = [
 }
 
 @keyframes shake {
-    0%, 100% {
+    0%,
+    100% {
         transform: rotate(0deg);
     }
     25% {

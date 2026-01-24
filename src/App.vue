@@ -9,14 +9,14 @@ import PageHeader from "./components/PageHeader.vue";
             <Sidebar />
         </el-aside>
         <el-container>
-            <el-header>
+            <el-header style="padding: 0">
                 <PageHeader>
                     <template #actions>
                         <router-view name="header"></router-view>
                     </template>
                 </PageHeader>
             </el-header>
-            <el-main>
+            <el-main style="padding: 16px">
                 <router-view v-slot="{ Component }">
                     <transition name="fade" mode="out-in">
                         <component :is="Component" />
