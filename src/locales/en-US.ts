@@ -56,6 +56,11 @@ export default {
     location: "Binary location",
     success: "Downloaded successfully to {path}",
     failed: "Download failed: {error}",
+    size: "Size",
+    downloads: "Downloads",
+    downloadBtn: "Download",
+    releaseDate: "Release Date",
+    copyLink: "Copy Link",
   },
   settings: {
     title: "Settings",

@@ -56,6 +56,11 @@ export default {
     location: "文件位置",
     success: "下载成功，保存在 {path}",
     failed: "下载失败: {error}",
+    size: "大小",
+    downloads: "下载",
+    downloadBtn: "下载",
+    releaseDate: "发布时间",
+    copyLink: "复制链接",
   },
   settings: {
     title: "设置",
