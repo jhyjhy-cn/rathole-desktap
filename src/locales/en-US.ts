@@ -14,6 +14,8 @@ export default {
     browse: "Browse",
     version: "Version",
     copy: "Copy",
+    expand: "Expand",
+    collapse: "Collapse",
   },
   sidebar: {
     home: "Home",

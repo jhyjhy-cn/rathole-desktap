@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import Sidebar from "./components/Sidebar.vue";
+import { useUiStore } from "./stores/ui";
+
+const uiStore = useUiStore();
+const sidebarWidth = computed(() => (uiStore.isCollapsed ? "60px" : "180px"));
 </script>
 
 <template>
     <el-container class="layout-container">
-        <el-aside width="60px">
+        <el-aside :width="sidebarWidth">
             <Sidebar />
         </el-aside>
         <el-main class="main-content">
@@ -24,6 +29,7 @@ import Sidebar from "./components/Sidebar.vue";
 .el-aside {
     background-color: var(--el-bg-color-overlay);
     border-right: 1px solid var(--el-border-color);
+    transition: width 0.3s ease;
 }
 .main-content {
     height: 100%;

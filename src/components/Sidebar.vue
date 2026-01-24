@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import {
     Menu as IconMenu,
     Setting,
@@ -7,13 +7,31 @@ import {
     Monitor,
     InfoFilled,
     House,
+    DArrowLeft,
+    DArrowRight,
 } from "@element-plus/icons-vue";
 
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { useUiStore } from "../stores/ui";
 
-const isCollapse = ref(true);
-const activeIndex = ref("1");
+const uiStore = useUiStore();
 const router = useRouter();
+const route = useRoute();
+
+const isCollapse = computed(() => uiStore.isCollapsed);
+
+// 路由到菜单索引的映射
+const routeToIndexMap: Record<string, string> = {
+    "/": "1",
+    "/proxy": "2",
+    "/download": "3",
+    "/settings": "4",
+    "/logs": "5",
+    "/about": "6",
+};
+
+// 根据当前路由计算激活的菜单项
+const activeIndex = computed(() => routeToIndexMap[route.path] || "1");
 
 const handleSelect = (key: string) => {
     switch (key) {
@@ -65,14 +83,31 @@ const menuItems = [
                 :content="$t(item.title)"
                 placement="right"
                 :show-after="300"
+                :disabled="!isCollapse"
             >
                 <el-menu-item :index="item.index">
                     <el-icon class="menu-icon">
                         <component :is="item.icon" />
                     </el-icon>
+                    <template #title>{{ $t(item.title) }}</template>
                 </el-menu-item>
             </el-tooltip>
         </el-menu>
+        <div class="collapse-btn-wrapper">
+            <el-tooltip
+                :content="isCollapse ? $t('common.expand') : $t('common.collapse')"
+                placement="right"
+                :show-after="300"
+                :disabled="!isCollapse"
+            >
+                <el-button
+                    class="collapse-btn"
+                    :icon="isCollapse ? DArrowRight : DArrowLeft"
+                    circle
+                    @click="uiStore.toggleSidebar"
+                />
+            </el-tooltip>
+        </div>
     </div>
 </template>
 
@@ -81,11 +116,11 @@ const menuItems = [
     height: 100%;
     display: flex;
     flex-direction: column;
+    transition: width 0.3s ease;
 }
 
 .logo-section {
     height: 60px;
-    width: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -100,7 +135,11 @@ const menuItems = [
 .el-menu-vertical {
     flex: 1;
     border-right: none;
-    width: 60px !important;
+    overflow-x: hidden;
+}
+
+.el-menu-vertical:not(.el-menu--collapse) {
+    width: 180px;
 }
 
 .el-menu-vertical.el-menu--collapse {
@@ -108,10 +147,8 @@ const menuItems = [
 }
 
 .el-menu-item {
-    height: 40px;
-    line-height: 40px;
-    padding: 0;
-    justify-content: center;
+    height: 48px;
+    line-height: 48px;
 }
 
 .el-menu-item.is-active {
@@ -129,6 +166,18 @@ const menuItems = [
 
 .el-menu-item:hover .menu-icon {
     animation: shake 0.5s ease-in-out;
+}
+
+.collapse-btn-wrapper {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid var(--el-border-color);
+}
+
+.collapse-btn {
+    transition: all 0.3s ease;
 }
 
 @keyframes shake {

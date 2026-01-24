@@ -185,95 +185,111 @@ function copyLink(url: string) {
 
 .release-card {
     border: 1px solid var(--el-border-color);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 16px;
     background: white;
-    transition: all 0.3s;
-    height: 120px;
+    transition: all 0.3s ease;
+    min-height: 140px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .release-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--el-color-primary-light-5);
+    transform: translateY(-2px);
 }
 
 .card-header {
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 .version-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    color: var(--el-color-primary);
+    color: var(--el-text-color-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-body {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
 }
 
 .info-row {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
     font-size: 13px;
-    margin-bottom: 4px;
+    min-width: 0;
 }
 
 .info-label {
-    color: #6b7280;
+    color: var(--el-text-color-secondary);
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .info-value {
-    color: #374151;
+    color: var(--el-text-color-primary);
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .size-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    background-color: #f3f4f6;
-    border-radius: 4px;
+    padding: 3px 10px;
+    background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-color-primary-light-8));
+    border-radius: 6px;
     font-size: 12px;
-    color: #6b7280;
-    margin-top: 4px;
+    font-weight: 600;
+    color: var(--el-color-primary);
+    white-space: nowrap;
 }
 
 .card-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .download-btn {
     flex: 1;
-    margin-right: 8px;
-    background-color: var(--el-color-primary);
-    border-color: var(--el-color-primary);
-    padding: 6px 12px;
-    font-size: 14px;
+    background: linear-gradient(135deg, var(--el-color-primary), var(--el-color-primary-light-3));
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
 }
 
 .download-btn:hover {
-    background-color: var(--el-color-primary-light-3);
-    border-color: var(--el-color-primary-light-3);
+    background: linear-gradient(135deg, var(--el-color-primary-light-3), var(--el-color-primary-light-5));
+    transform: scale(1.02);
 }
 
 .copy-btn {
     flex-shrink: 0;
     color: var(--el-color-primary);
-    padding: 6px 12px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+    background: var(--el-color-primary-light-9);
 }
 
 .copy-btn:hover {
-    color: var(--el-color-primary-light-3);
+    background: var(--el-color-primary-light-8);
+    color: var(--el-color-primary-dark-2);
 }
 </style>

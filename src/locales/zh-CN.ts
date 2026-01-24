@@ -14,6 +14,8 @@ export default {
     browse: "浏览",
     version: "版本",
     copy: "复制",
+    expand: "展开",
+    collapse: "收起",
   },
   sidebar: {
     home: "首页",
@@ -49,7 +51,7 @@ export default {
     editService: "编辑服务",
   },
   download: {
-    title: "下载 Rathole",
+    title: "下载",
     description: "获取最新版本的 Rathole 二进制文件。",
     downloadInstall: "下载并安装",
     ready: "就绪",
@@ -79,6 +81,5 @@ export default {
     description: "Rathole 反向代理的 GUI 客户端。",
     core: "Rathole 核心",
     inspired: "致敬 Frpc-Desktop",
-  }
-}
-
+  },
+};
