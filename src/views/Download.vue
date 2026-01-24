@@ -3,6 +3,13 @@ import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
+import {
+    Refresh,
+    Upload,
+    Download,
+    Link,
+    Check,
+} from "@element-plus/icons-vue";
 import PageHeader from "../components/PageHeader.vue";
 
 interface Release {
@@ -17,10 +24,37 @@ const { t } = useI18n();
 const loading = ref(false);
 const releases = ref<Release[]>([]);
 const downloading = ref<string>("");
+const downloadedVersions = ref<Set<string>>(new Set());
 
+// Load downloaded versions from localStorage and check installed version
 onMounted(async () => {
+    const saved = localStorage.getItem("rathole-downloaded-versions");
+    if (saved) {
+        downloadedVersions.value = new Set(JSON.parse(saved));
+    }
+    // Check installed version
+    await checkInstalledVersion();
     await fetchReleases();
 });
+
+async function checkInstalledVersion() {
+    try {
+        const version = await invoke<string>("get_installed_version");
+        if (version && version !== "unknown") {
+            // Add v prefix if not present (GitHub tags use v prefix)
+            const normalizedVersion = version.startsWith("v") ? version : `v${version}`;
+            downloadedVersions.value.add(normalizedVersion);
+            // Save to localStorage
+            localStorage.setItem(
+                "rathole-downloaded-versions",
+                JSON.stringify(Array.from(downloadedVersions.value))
+            );
+        }
+    } catch (e) {
+        // No installed version, ignore
+        console.debug("No installed rathole found");
+    }
+}
 
 async function fetchReleases() {
     loading.value = true;
@@ -28,12 +62,24 @@ async function fetchReleases() {
         const response = await fetch(
             "https://api.github.com/repos/rapiz1/rathole/releases",
         );
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
+
+        // Check if data is an array
+        if (!Array.isArray(data)) {
+            console.error("Unexpected API response:", data);
+            releases.value = [];
+            return;
+        }
 
         releases.value = data
             .flatMap((release: any) => {
                 if (release.prerelease) return [];
-                const asset = release.assets.find(
+                const asset = release.assets?.find(
                     (a: any) =>
                         a.name.includes("aarch64-apple-darwin") ||
                         a.name.includes("x86_64-apple-darwin"),
@@ -52,7 +98,9 @@ async function fetchReleases() {
             })
             .slice(0, 10);
     } catch (e) {
+        console.error("Fetch releases error:", e);
         ElMessage.error(`Failed to fetch releases: ${e}`);
+        releases.value = [];
     } finally {
         loading.value = false;
     }
@@ -65,11 +113,21 @@ async function startDownload(release: Release) {
             version: release.name,
         });
         ElMessage.success(t("download.success", { path }));
+        // Add to downloaded versions
+        downloadedVersions.value.add(release.name);
+        localStorage.setItem(
+            "rathole-downloaded-versions",
+            JSON.stringify(Array.from(downloadedVersions.value))
+        );
     } catch (e) {
         ElMessage.error(t("download.failed", { error: e }));
     } finally {
         downloading.value = "";
     }
+}
+
+function isDownloaded(version: string): boolean {
+    return downloadedVersions.value.has(version);
 }
 
 function formatSize(bytes: number) {
@@ -135,6 +193,7 @@ function copyLink(url: string) {
                 
                 <div class="card-actions">
                     <el-button
+                        v-if="!isDownloaded(release.name)"
                         type="primary"
                         :loading="downloading === release.name"
                         @click="startDownload(release)"
@@ -142,6 +201,15 @@ function copyLink(url: string) {
                     >
                         <el-icon><Download /></el-icon>
                         {{ t("download.downloadBtn") }}
+                    </el-button>
+                    <el-button
+                        v-else
+                        type="success"
+                        disabled
+                        class="download-btn downloaded-btn"
+                    >
+                        <el-icon><Check /></el-icon>
+                        {{ t("download.downloaded") }}
                     </el-button>
                     
                     <el-button
@@ -291,5 +359,15 @@ function copyLink(url: string) {
 .copy-btn:hover {
     background: var(--el-color-primary-light-8);
     color: var(--el-color-primary-dark-2);
+}
+
+.downloaded-btn {
+    background: linear-gradient(135deg, var(--el-color-success), var(--el-color-success-light-3));
+    border: none;
+}
+
+.downloaded-btn:hover {
+    background: linear-gradient(135deg, var(--el-color-success-light-3), var(--el-color-success-light-5));
+    transform: none;
 }
 </style>

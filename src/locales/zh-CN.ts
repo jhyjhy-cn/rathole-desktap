@@ -61,6 +61,7 @@ export default {
     size: "大小",
     downloads: "下载",
     downloadBtn: "下载",
+    downloaded: "已下载",
     releaseDate: "发布时间",
     copyLink: "复制链接",
   },

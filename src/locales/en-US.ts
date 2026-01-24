@@ -61,6 +61,7 @@ export default {
     size: "Size",
     downloads: "Downloads",
     downloadBtn: "Download",
+    downloaded: "Downloaded",
     releaseDate: "Release Date",
     copyLink: "Copy Link",
   },

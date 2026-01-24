@@ -1,36 +1,71 @@
 <script setup lang="ts">
+import { ref, onMounted, computed } from "vue";
 import { useRatholeStore } from "../stores/rathole";
 import { useConfigStore } from "../stores/config";
 import { storeToRefs } from "pinia";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ElMessage } from "element-plus";
+import { invoke } from "@tauri-apps/api/core";
 import PageHeader from "../components/PageHeader.vue";
 import { useI18n } from "vue-i18n";
 
 const ratholeStore = useRatholeStore();
 const configStore = useConfigStore();
 const { isRunning } = storeToRefs(ratholeStore);
+const { currentConfig } = storeToRefs(configStore);
 const { t } = useI18n();
+
+const selectedVersion = ref("");
+
+// Check if config is ready
+const hasConfig = computed(() => {
+    return currentConfig.value?.client?.server_addr &&
+           Object.keys(currentConfig.value?.client?.services || {}).length > 0;
+});
+
+// Load selected version from localStorage
+onMounted(() => {
+    const saved = localStorage.getItem("rathole-selected-version");
+    if (saved) {
+        selectedVersion.value = saved;
+    }
+});
 
 async function selectAndStart() {
     if (isRunning.value) {
         await ratholeStore.stop();
         ElMessage.info(t("dashboard.stopped"));
-    } else {
-        const file = await open({
-            multiple: false,
-            filters: [
-                {
-                    name: "Config",
-                    extensions: ["toml"],
-                },
-            ],
-        });
-        if (file) {
-            await configStore.loadConfig(file as string);
-            await ratholeStore.start(file as string, false);
-            ElMessage.success(t("dashboard.running"));
+        return;
+    }
+
+    // Check if version is selected
+    if (!selectedVersion.value) {
+        ElMessage.warning("请先在设置页面选择 Rathole 版本");
+        return;
+    }
+
+    // Check if config is ready
+    if (!hasConfig.value) {
+        ElMessage.warning("请先在代理配置页面添加服务");
+        return;
+    }
+
+    try {
+        // Fix permissions first
+        try {
+            await invoke("fix_rathole_permissions");
+        } catch (e) {
+            console.warn("Failed to fix permissions:", e);
         }
+
+        // Generate temp config and start
+        const configPath = await invoke<string>("save_temp_config", {
+            config: currentConfig.value,
+        });
+        await ratholeStore.start(configPath, false);
+        ElMessage.success(t("dashboard.running"));
+    } catch (e) {
+        ElMessage.error(`启动失败: ${e}`);
     }
 }
 </script>
@@ -45,6 +80,12 @@ async function selectAndStart() {
                 <!-- Title -->
                 <h1 class="title">{{ $t("dashboard.title") }}</h1>
                 <p class="subtitle">{{ $t("dashboard.subtitle") }}</p>
+
+                <!-- Version info -->
+                <div v-if="selectedVersion" class="version-info">
+                    <span class="version-label">当前版本:</span>
+                    <span class="version-value">{{ selectedVersion }}</span>
+                </div>
 
                 <!-- Main control -->
                 <div class="control-section">
@@ -177,7 +218,28 @@ async function selectAndStart() {
 .subtitle {
     font-size: 14px;
     color: var(--el-text-color-secondary);
-    margin: 0 0 48px 0;
+    margin: 0 0 16px 0;
+}
+
+.version-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--el-fill-color-light);
+    border-radius: 20px;
+    margin-bottom: 24px;
+}
+
+.version-label {
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+}
+
+.version-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-color-primary);
 }
 
 .control-section {

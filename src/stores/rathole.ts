@@ -9,22 +9,42 @@ export const useRatholeStore = defineStore('rathole', () => {
   const configPath = ref('') // Store current config path
 
   // Listen for logs
-  // Need to await this or handle it better in setup, but for now we just fire and forget
   try {
       listen<string>('rathole-log', (event) => {
         logs.value.push(event.payload)
-        // Keep log size manageable
         if (logs.value.length > 1000) {
-            logs.value.shift()
+          logs.value.shift()
         }
-      }).catch(err => console.warn("Failed to setup listener (async)", err));
+      }).catch(err => console.warn("Failed to setup listener", err));
   } catch (e) {
-      console.warn("Failed to setup listener (sync) - likely not in Tauri", e);
+      console.warn("Failed to setup listener", e);
   }
+
+  // Check if rathole is already running on init
+  async function checkStatus() {
+    try {
+      const running = await invoke<boolean>('is_rathole_running')
+      isRunning.value = running
+      if (running) {
+        logs.value.push('--- Service is running (detected on startup) ---')
+      }
+    } catch (e) {
+      console.warn('Failed to check rathole status:', e)
+    }
+  }
+
+  // Initialize status check
+  checkStatus()
 
   async function start(path: string, isServer: boolean) {
     try {
-      await invoke('start_rathole', { configPath: path, isServer })
+      const result = await invoke('start_rathole', { configPath: path, isServer })
+      // Check if "Already running" was returned
+      if (result === 'Already running') {
+        isRunning.value = true
+        logs.value.push('--- Service is already running ---')
+        return
+      }
       isRunning.value = true
       configPath.value = path
       logs.value.push('--- Service Started ---')
@@ -47,5 +67,5 @@ export const useRatholeStore = defineStore('rathole', () => {
     }
   }
 
-  return { isRunning, logs, start, stop, configPath }
+  return { isRunning, logs, start, stop, configPath, checkStatus }
 })

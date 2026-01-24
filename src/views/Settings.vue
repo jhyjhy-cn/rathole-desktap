@@ -3,7 +3,7 @@ import { useConfigStore } from "../stores/config";
 import { useThemeStore } from "../stores/theme";
 import { useUiStore } from "../stores/ui";
 import { storeToRefs } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -12,6 +12,7 @@ import {
     Sunny,
     Setting as SettingIcon,
     Document,
+    Download,
 } from "@element-plus/icons-vue";
 import PageHeader from "../components/PageHeader.vue";
 
@@ -24,19 +25,45 @@ const { isCollapsed } = storeToRefs(uiStore);
 const currentFile = ref("");
 const { locale } = useI18n();
 
-// Client settings
-const clientSettings = computed({
-    get: () => ({
-        serverAddr: currentConfig.value?.client?.server_addr || "",
-        token: currentConfig.value?.client?.token || "",
-    }),
-    set: (val) => {
-        const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}));
-        if (!cfg.client) cfg.client = {};
-        cfg.client.server_addr = val.serverAddr;
-        cfg.client.token = val.token;
-        store.updateFromObject(cfg);
-    },
+// Rathole version settings
+const selectedVersion = ref("");
+const downloadedVersions = ref<string[]>([]);
+
+// Client config - use refs for proper v-model binding
+const serverAddr = ref("");
+const token = ref("");
+
+// Sync with store when config changes
+watch(
+    () => currentConfig.value?.client?.server_addr || "",
+    (val) => (serverAddr.value = val),
+    { immediate: true }
+);
+watch(
+    () => currentConfig.value?.client?.token || "",
+    (val) => (token.value = val),
+    { immediate: true }
+);
+
+// Save client config to store
+function saveClientConfig() {
+    const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}));
+    if (!cfg.client) cfg.client = {};
+    cfg.client.server_addr = serverAddr.value;
+    cfg.client.token = token.value;
+    store.updateFromObject(cfg);
+}
+
+// Load settings from localStorage
+onMounted(() => {
+    const savedVersion = localStorage.getItem("rathole-selected-version");
+    if (savedVersion) {
+        selectedVersion.value = savedVersion;
+    }
+    const saved = localStorage.getItem("rathole-downloaded-versions");
+    if (saved) {
+        downloadedVersions.value = JSON.parse(saved);
+    }
 });
 
 async function loadFile() {
@@ -64,6 +91,11 @@ async function saveFile() {
 function handleLocaleChange(val: string) {
     locale.value = val;
     localStorage.setItem("rathole-locale", val);
+}
+
+function handleVersionChange(val: string) {
+    selectedVersion.value = val;
+    localStorage.setItem("rathole-selected-version", val);
 }
 </script>
 
@@ -121,6 +153,25 @@ function handleLocaleChange(val: string) {
                             "
                         />
                     </div>
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <el-icon><Download /></el-icon>
+                            <span>Rathole 版本</span>
+                        </div>
+                        <el-select
+                            v-model="selectedVersion"
+                            @change="handleVersionChange"
+                            style="width: 200px"
+                            placeholder="选择版本"
+                        >
+                            <el-option
+                                v-for="version in downloadedVersions"
+                                :key="version"
+                                :label="version"
+                                :value="version"
+                            />
+                        </el-select>
+                    </div>
                 </div>
             </div>
 
@@ -134,7 +185,8 @@ function handleLocaleChange(val: string) {
                     <div class="form-item">
                         <label>服务端地址</label>
                         <el-input
-                            v-model="clientSettings.serverAddr"
+                            v-model="serverAddr"
+                            @blur="saveClientConfig"
                             placeholder="server.example.com:2333"
                         >
                             <template #prefix>
@@ -145,7 +197,8 @@ function handleLocaleChange(val: string) {
                     <div class="form-item">
                         <label>令牌 (Token)</label>
                         <el-input
-                            v-model="clientSettings.token"
+                            v-model="token"
+                            @blur="saveClientConfig"
                             type="password"
                             show-password
                             placeholder="your-token"
