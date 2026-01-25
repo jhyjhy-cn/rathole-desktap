@@ -1,10 +1,9 @@
 use tauri::{AppHandle, Manager, Emitter};
-use std::sync::{Mutex, Arc};
+use std::sync::Mutex;
 use std::process::{Command, Child, Stdio};
 use std::io::{BufReader, BufRead, Write};
 use std::thread;
 use std::fs::{self, File, OpenOptions};
-use std::path::PathBuf;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
@@ -37,7 +36,7 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
     let file = File::open(&log_path).map_err(|e| e.to_string())?;
     let reader = BufReader::new(file);
 
-    let mut all_lines: Vec<String> = reader
+    let all_lines: Vec<String> = reader
         .lines()
         .filter_map(|line| line.ok())
         .collect();
@@ -369,44 +368,93 @@ pub fn run() {
             get_installed_version,
             save_temp_config,
             fix_rathole_permissions,
-            is_rathole_running
+            is_rathole_running,
+            toggle_window,
+            hide_window
         ])
         .setup(|app| {
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let app_handle = app.handle().clone();
+
+            // Create menu items using AppHandle
+            let show_i = MenuItem::with_id(&app_handle, "show", "显示窗口", true, None::<&str>)?;
+            let hide_i = MenuItem::with_id(&app_handle, "hide", "隐藏窗口", true, None::<&str>)?;
+            let separator1 = tauri::menu::PredefinedMenuItem::separator(&app_handle)?;
+            let quit_i = MenuItem::with_id(&app_handle, "quit", "退出", true, None::<&str>)?;
+
+            let menu = Menu::with_items(&app_handle, &[&show_i, &hide_i, &separator1, &quit_i])?;
+            let app_handle_for_menu = app_handle.clone();
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .tooltip("Rathole Desktop")
-                .on_menu_event(|app, event| {
+                .on_menu_event(move |handle, event| {
                     match event.id.as_ref() {
-                        "quit" => {
-                            // TODO: Kill process if running
-                            app.exit(0);
-                        }
                         "show" => {
-                            if let Some(window) = app.get_webview_window("main") {
+                            if let Some(window) = handle.get_webview_window("main") {
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             }
+                        }
+                        "hide" => {
+                            if let Some(window) = handle.get_webview_window("main") {
+                                let _ = window.hide();
+                            }
+                        }
+                        "quit" => {
+                            // Stop rathole if running before exit
+                            if let Some(state) = handle.try_state::<RatholeState>() {
+                                if let Ok(mut guard) = state.process.lock() {
+                                    if let Some(mut child) = guard.take() {
+                                        let _ = child.kill();
+                                    }
+                                }
+                            }
+                            handle.exit(0);
                         }
                         _ => {}
                     }
                 })
                 .on_tray_icon_event(|tray, event| {
-                     if let TrayIconEvent::Click { .. } = event {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                    match event {
+                        TrayIconEvent::Click { .. } | TrayIconEvent::DoubleClick { .. } => {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                if window.is_visible().unwrap_or(false) {
+                                    let _ = window.hide();
+                                } else {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
+                            }
                         }
-                     }
+                        _ => {}
+                    }
                 })
-                .build(app)?;
+                .build(&app_handle_for_menu)?;
 
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn toggle_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_visible().map_err(|e| e.to_string())? {
+            window.hide().map_err(|e| e.to_string())?;
+        } else {
+            window.show().map_err(|e| e.to_string())?;
+            window.set_focus().map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn hide_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
