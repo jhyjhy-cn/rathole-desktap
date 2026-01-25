@@ -4,6 +4,7 @@ use std::process::{Command, Child, Stdio};
 use std::io::{BufReader, BufRead, Write};
 use std::thread;
 use std::fs::{self, File, OpenOptions};
+use std::time::Duration;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
@@ -61,10 +62,16 @@ fn get_system_stats() -> Result<(f32, f32), String> {
     let current_pid = std::process::id();
     let pid = Pid::from_u32(current_pid);
 
-    // Only refresh the current process, not all processes
+    // First refresh to initialize
     sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
 
-    // Get current process memory (doesn't need double refresh)
+    // Wait a bit for CPU measurement
+    std::thread::sleep(Duration::from_millis(200));
+
+    // Second refresh to get actual CPU usage
+    sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+
+    // Get current process memory
     let memory_mb: f32 = sys.process(pid)
         .map(|p| (p.memory() / 1024 / 1024) as f32)
         .unwrap_or(0.0);
