@@ -130,21 +130,21 @@ function formatMemoryMB(value: number): string {
         <!-- System Stats -->
         <div class="system-stats">
             <div class="stat-item">
-                <div class="stat-icon-row">
+                <div class="stat-header">
                     <el-icon class="stat-icon" :style="{ color: getProgressColor(cpuUsage) }">
                         <Cpu />
                     </el-icon>
+                    <span class="stat-label">CPU</span>
                 </div>
-                <div class="stat-label">CPU</div>
                 <div class="stat-value">{{ formatPercent(cpuUsage) }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-icon-row">
+                <div class="stat-header">
                     <el-icon class="stat-icon" :style="{ color: getProgressColor(memoryUsage) }">
                         <Monitor />
                     </el-icon>
+                    <span class="stat-label">内存</span>
                 </div>
-                <div class="stat-label">内存</div>
                 <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
             </div>
         </div>
@@ -236,32 +236,34 @@ function formatMemoryMB(value: number): string {
     padding: 12px;
     border-top: 1px solid var(--el-border-color);
     background: var(--el-fill-color-extra-light);
-    display: flex;
-    justify-content: space-around;
 }
 
 .stat-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 4px;
+    margin-bottom: 8px;
 }
 
-.stat-icon-row {
+.stat-item:last-child {
+    margin-bottom: 0;
+}
+
+.stat-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
 }
 
 .stat-icon {
-    font-size: 16px;
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
 .stat-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--el-text-color-secondary);
-    text-transform: uppercase;
 }
 
 .stat-value {
@@ -269,6 +271,7 @@ function formatMemoryMB(value: number): string {
     font-weight: 600;
     color: var(--el-text-color-primary);
     font-family: "SF Mono", "Monaco", "Consolas", monospace;
+    margin-left: 20px; /* Align with label */
 }
 
 @keyframes shake {
