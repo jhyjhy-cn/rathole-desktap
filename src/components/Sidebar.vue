@@ -93,16 +93,16 @@ function formatMemory(value: number): string {
 
 // Get progress bar color based on CPU usage (percentage)
 function getCpuColor(usage: number): string {
-    if (usage < 50) return "#67c23a"; // green
-    if (usage < 80) return "#e6a23c"; // orange
-    return "#f56c6c"; // red
+    if (usage < 5) return "#67c23a"; // < 5% green
+    if (usage < 15) return "#e6a23c"; // < 15% orange
+    return "#f56c6c"; // >= 15% red
 }
 
 // Get progress bar color based on memory usage (MB)
 function getMemoryColor(usage: number): string {
-    if (usage < 2048) return "#67c23a"; // < 2GB green
-    if (usage < 4096) return "#e6a23c"; // < 4GB orange
-    return "#f56c6c"; // >= 4GB red
+    if (usage < 200) return "#67c23a"; // < 200MB green
+    if (usage < 500) return "#e6a23c"; // < 500MB orange
+    return "#f56c6c"; // >= 500MB red
 }
 </script>
 
