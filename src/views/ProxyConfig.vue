@@ -28,7 +28,7 @@ function editService(svc: any) {
 }
 
 function addService() {
-    editingService.value = { name: '', local_addr: '127.0.0.1:80' }
+    editingService.value = { name: '', local_addr: '127.0.0.1:80', token: '' }
     isNew.value = true
     dialogVisible.value = true
 }
@@ -38,7 +38,8 @@ function saveService() {
     if (!cfg.client) cfg.client = {}
     if (!cfg.client.services) cfg.client.services = {}
     cfg.client.services[editingService.value.name] = {
-        local_addr: editingService.value.local_addr
+        local_addr: editingService.value.local_addr,
+        token: editingService.value.token
     }
     store.updateFromObject(cfg)
     dialogVisible.value = false
@@ -75,6 +76,7 @@ function deleteService(name: string) {
                     </template>
                     <div class="svc-details">
                         <p>{{ $t('proxy.address') }}: {{ svc.local_addr }}</p>
+                        <p>Token: {{ svc.token ? '********' : '未设置' }}</p>
                     </div>
                     <div class="actions">
                         <el-button size="small" @click="editService(svc)">{{ $t('common.edit') }}</el-button>
@@ -92,6 +94,9 @@ function deleteService(name: string) {
             </el-form-item>
             <el-form-item :label="$t('proxy.address')">
                 <el-input v-model="editingService.local_addr" placeholder="127.0.0.1:80" />
+            </el-form-item>
+            <el-form-item label="Token">
+                <el-input v-model="editingService.token" type="password" show-password placeholder="与服务端一致的令牌" />
             </el-form-item>
         </el-form>
         <template #footer>

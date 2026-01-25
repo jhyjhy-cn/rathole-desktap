@@ -1,11 +1,13 @@
 use tauri::{AppHandle, Manager, Emitter};
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 use std::process::{Command, Child, Stdio};
-use std::io::{BufReader, BufRead};
+use std::io::{BufReader, BufRead, Write};
 use std::thread;
-use std::fs;
+use std::fs::{self, File, OpenOptions};
+use std::path::PathBuf;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use chrono::Local;
 
 // Shared state to hold the child process
 struct RatholeState {
@@ -23,6 +25,34 @@ fn write_config(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let date_str = Local::now().format("%Y-%m-%d").to_string();
+    let log_path = app_dir.join(format!("rathole-{}.log", date_str));
+
+    if !log_path.exists() {
+        return Ok(vec![]);
+    }
+
+    let file = File::open(&log_path).map_err(|e| e.to_string())?;
+    let reader = BufReader::new(file);
+
+    let mut all_lines: Vec<String> = reader
+        .lines()
+        .filter_map(|line| line.ok())
+        .collect();
+
+    // Return last N lines
+    let start = if all_lines.len() > lines {
+        all_lines.len() - lines
+    } else {
+        0
+    };
+
+    Ok(all_lines[start..].to_vec())
+}
+
+#[tauri::command]
 async fn download_rathole(app: AppHandle, version: String) -> Result<String, String> {
     let target = if cfg!(target_os = "windows") {
         "x86_64-pc-windows-msvc"
@@ -33,11 +63,11 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
     };
 
     let url = format!("https://github.com/rapiz1/rathole/releases/download/{}/rathole-{}.zip", version, target);
-    
+
     // Download
     let response = reqwest::get(&url).await.map_err(|e| e.to_string())?;
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    
+
     // Save zip
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     if !app_dir.exists() {
@@ -45,15 +75,15 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
     }
     let zip_path = app_dir.join("rathole.zip");
     fs::write(&zip_path, bytes).map_err(|e| e.to_string())?;
-    
+
     // Unzip
     let file = fs::File::open(&zip_path).map_err(|e| e.to_string())?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
-    
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         let outpath = app_dir.join(file.name());
-        
+
         if file.name().ends_with('/') {
             fs::create_dir_all(&outpath).map_err(|e| e.to_string())?;
         } else {
@@ -66,7 +96,7 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
             std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
         }
     }
-    
+
     // Cleanup
     let _ = fs::remove_file(zip_path);
 
@@ -115,8 +145,17 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
         }
     }
 
-    // Check for local binary in app data dir
+    // Get log file path
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
+    }
+
+    // Create log file with current date
+    let date_str = Local::now().format("%Y-%m-%d").to_string();
+    let log_path = app_dir.join(format!("rathole-{}.log", date_str));
+
+    // Check for local binary in app data dir
     let exe_name = if cfg!(target_os = "windows") { "rathole.exe" } else { "rathole" };
     let local_bin = app_dir.join(exe_name);
 
@@ -150,14 +189,32 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
         Ok(mut child) => {
             let stdout = child.stdout.take();
             let stderr = child.stderr.take();
-            
+            let log_path_clone = log_path.clone();
+
             if let Some(stdout) = stdout {
                 let app_handle_out = app.clone();
+                let log_path_out = log_path_clone.clone();
                 thread::spawn(move || {
                     let reader = BufReader::new(stdout);
+                    let mut log_file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(&log_path_out)
+                        .ok();
+
                     for line in reader.lines() {
                         if let Ok(l) = line {
-                            let _ = app_handle_out.emit("rathole-log", l);
+                            let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                            let log_line = format!("[{}] {}", timestamp, l);
+
+                            // Emit to frontend
+                            let _ = app_handle_out.emit("rathole-log", &l);
+
+                            // Write to file
+                            if let Some(ref mut file) = log_file {
+                                let _ = writeln!(file, "{}", log_line);
+                                let _ = file.flush();
+                            }
                         }
                     }
                 });
@@ -167,10 +224,25 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
                 let app_handle_err = app.clone();
                 thread::spawn(move || {
                     let reader = BufReader::new(stderr);
+                    let mut log_file = OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(&log_path_clone)
+                        .ok();
+
                     for line in reader.lines() {
                         if let Ok(l) = line {
-                            // Prefix errors or handle them differently
+                            let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
+                            let log_line = format!("[{}] [ERR] {}", timestamp, l);
+
+                            // Emit to frontend
                             let _ = app_handle_err.emit("rathole-log", format!("[ERR] {}", l));
+
+                            // Write to file
+                            if let Some(ref mut file) = log_file {
+                                let _ = writeln!(file, "{}", log_line);
+                                let _ = file.flush();
+                            }
                         }
                     }
                 });
@@ -267,7 +339,7 @@ fn is_rathole_running(state: tauri::State<RatholeState>) -> bool {
 #[tauri::command]
 fn stop_rathole(state: tauri::State<RatholeState>) -> Result<String, String> {
     let mut process_guard = state.process.lock().map_err(|e| e.to_string())?;
-    
+
     if let Some(mut child) = process_guard.take() {
         match child.kill() {
             Ok(_) => Ok("Stopped successfully".to_string()),
@@ -292,6 +364,7 @@ pub fn run() {
             stop_rathole,
             read_config,
             write_config,
+            read_logs,
             download_rathole,
             get_installed_version,
             save_temp_config,

@@ -13,35 +13,31 @@ import {
     Setting as SettingIcon,
     Document,
     Download,
+    CopyDocument,
 } from "@element-plus/icons-vue";
 import PageHeader from "../components/PageHeader.vue";
 
 const store = useConfigStore();
 const themeStore = useThemeStore();
 const uiStore = useUiStore();
-const { currentConfig } = storeToRefs(store);
+const { currentConfig, rawConfig } = storeToRefs(store);
 const { isDark } = storeToRefs(themeStore);
 const { isCollapsed } = storeToRefs(uiStore);
 const currentFile = ref("");
 const { locale } = useI18n();
+const showConfigPreview = ref(false);
 
 // Rathole version settings
 const selectedVersion = ref("");
 const downloadedVersions = ref<string[]>([]);
 
 // Client config - use refs for proper v-model binding
-const serverAddr = ref("");
-const token = ref("");
+const remoteAddr = ref("");
 
 // Sync with store when config changes
 watch(
-    () => currentConfig.value?.client?.server_addr || "",
-    (val) => (serverAddr.value = val),
-    { immediate: true }
-);
-watch(
-    () => currentConfig.value?.client?.token || "",
-    (val) => (token.value = val),
+    () => currentConfig.value?.client?.remote_addr || "",
+    (val) => (remoteAddr.value = val),
     { immediate: true }
 );
 
@@ -49,8 +45,15 @@ watch(
 function saveClientConfig() {
     const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}));
     if (!cfg.client) cfg.client = {};
-    cfg.client.server_addr = serverAddr.value;
-    cfg.client.token = token.value;
+    // Remove old token from client level if exists
+    if (cfg.client.token) {
+        delete cfg.client.token;
+    }
+    // Remove old server_addr if exists
+    if (cfg.client.server_addr) {
+        delete cfg.client.server_addr;
+    }
+    cfg.client.remote_addr = remoteAddr.value;
     store.updateFromObject(cfg);
 }
 
@@ -97,6 +100,21 @@ function handleVersionChange(val: string) {
     selectedVersion.value = val;
     localStorage.setItem("rathole-selected-version", val);
 }
+
+// Copy config to clipboard
+async function copyConfig() {
+    try {
+        await navigator.clipboard.writeText(rawConfig.value);
+        ElMessage.success("配置已复制到剪贴板");
+    } catch (e) {
+        ElMessage.error("复制失败");
+    }
+}
+
+// Toggle config preview
+function toggleConfigPreview() {
+    showConfigPreview.value = !showConfigPreview.value;
+}
 </script>
 
 <template>
@@ -110,6 +128,10 @@ function handleVersionChange(val: string) {
                 <el-button type="primary" @click="saveFile">
                     <el-icon><Document /></el-icon>
                     {{ $t("common.save") }}
+                </el-button>
+                <el-button @click="toggleConfigPreview">
+                    <el-icon><CopyDocument /></el-icon>
+                    {{ showConfigPreview ? "隐藏配置预览" : "配置预览" }}
                 </el-button>
             </template>
         </PageHeader>
@@ -183,9 +205,9 @@ function handleVersionChange(val: string) {
                 </div>
                 <div class="section-body">
                     <div class="form-item">
-                        <label>服务端地址</label>
+                        <label>服务端地址 (remote_addr)</label>
                         <el-input
-                            v-model="serverAddr"
+                            v-model="remoteAddr"
                             @blur="saveClientConfig"
                             placeholder="server.example.com:2333"
                         >
@@ -194,20 +216,9 @@ function handleVersionChange(val: string) {
                             </template>
                         </el-input>
                     </div>
-                    <div class="form-item">
-                        <label>令牌 (Token)</label>
-                        <el-input
-                            v-model="token"
-                            @blur="saveClientConfig"
-                            type="password"
-                            show-password
-                            placeholder="your-token"
-                        >
-                            <template #prefix>
-                                <el-icon><Document /></el-icon>
-                            </template>
-                        </el-input>
-                    </div>
+                    <p class="hint">
+                        Token 需要在每个服务下单独配置，请在"代理配置"页面设置
+                    </p>
                 </div>
             </div>
 
@@ -228,15 +239,45 @@ function handleVersionChange(val: string) {
                             :key="name"
                             class="service-item"
                         >
-                            <span class="service-name">{{ name }}</span>
-                            <span class="service-addr">{{
-                                (svc as any).local_addr
-                            }}</span>
+                            <div class="service-info">
+                                <span class="service-name">{{ name }}</span>
+                                <span class="service-addr">{{
+                                    (svc as any).local_addr
+                                }}</span>
+                            </div>
+                            <el-tag
+                                :type="(svc as any).token ? 'success' : 'danger'"
+                                size="small"
+                            >
+                                {{ (svc as any).token ? "Token 已配置" : "Token 未设置" }}
+                            </el-tag>
                         </div>
                     </div>
                     <div v-else class="empty-state">
                         <el-icon :size="32"><Document /></el-icon>
                         <p>暂无服务</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config Preview -->
+            <div v-if="showConfigPreview" class="setting-section">
+                <div class="section-header">
+                    <el-icon><CopyDocument /></el-icon>
+                    <h3>配置预览 (TOML)</h3>
+                    <el-button
+                        type="primary"
+                        size="small"
+                        @click="copyConfig"
+                        style="margin-left: auto"
+                    >
+                        <el-icon><CopyDocument /></el-icon>
+                        复制
+                    </el-button>
+                </div>
+                <div class="section-body">
+                    <div class="config-preview">
+                        <pre>{{ rawConfig || "// 配置为空" }}</pre>
                     </div>
                 </div>
             </div>
@@ -352,6 +393,12 @@ function handleVersionChange(val: string) {
     border-color: var(--el-color-primary-light-5);
 }
 
+.service-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .service-name {
     font-weight: 600;
     color: var(--el-text-color-primary);
@@ -380,5 +427,24 @@ function handleVersionChange(val: string) {
 .empty-state p {
     margin: 0;
     font-size: 14px;
+}
+
+.config-preview {
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.config-preview pre {
+    margin: 0;
+    font-family: "SF Mono", "Monaco", "Consolas", "Liberation Mono",
+        "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--el-text-color-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 </style>

@@ -74,7 +74,7 @@ export default {
     dark: "暗色",
   },
   logs: {
-    title: "实时日志",
+    title: "日志",
     clear: "清空",
   },
   about: {

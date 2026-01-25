@@ -19,7 +19,7 @@ const selectedVersion = ref("");
 
 // Check if config is ready
 const hasConfig = computed(() => {
-    return currentConfig.value?.client?.server_addr &&
+    return currentConfig.value?.client?.remote_addr &&
            Object.keys(currentConfig.value?.client?.services || {}).length > 0;
 });
 

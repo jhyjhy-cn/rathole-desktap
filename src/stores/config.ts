@@ -5,6 +5,23 @@ import { parse, stringify } from 'smol-toml'
 
 const CONFIG_STORAGE_KEY = 'rathole-client-config'
 
+// Clean deprecated fields from config
+function cleanConfig(config: any): any {
+  if (!config || !config.client) return config
+
+  const cleaned = JSON.parse(JSON.stringify(config))
+
+  // Remove deprecated fields from client level
+  if (cleaned.client.server_addr) {
+    delete cleaned.client.server_addr
+  }
+  if (cleaned.client.token) {
+    delete cleaned.client.token
+  }
+
+  return cleaned
+}
+
 export const useConfigStore = defineStore('config', () => {
   const currentConfig = ref<any>({})
   const rawConfig = ref('')
@@ -14,8 +31,12 @@ export const useConfigStore = defineStore('config', () => {
     const saved = localStorage.getItem(CONFIG_STORAGE_KEY)
     if (saved) {
       try {
-        currentConfig.value = JSON.parse(saved)
-        rawConfig.value = stringify(currentConfig.value)
+        let config = JSON.parse(saved)
+        config = cleanConfig(config)
+        currentConfig.value = config
+        rawConfig.value = stringify(config)
+        // Save cleaned config back to localStorage
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
       } catch (e) {
         console.warn('Failed to load config from storage', e)
       }
@@ -25,8 +46,9 @@ export const useConfigStore = defineStore('config', () => {
   // Save to localStorage whenever config changes
   watch(currentConfig, (val) => {
     if (val && Object.keys(val).length > 0) {
-      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(val))
-      rawConfig.value = stringify(val)
+      const cleaned = cleanConfig(val)
+      localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(cleaned))
+      rawConfig.value = stringify(cleaned)
     }
   }, { deep: true })
 
@@ -35,9 +57,11 @@ export const useConfigStore = defineStore('config', () => {
       const content = await invoke<string>('read_config', { path })
       rawConfig.value = content
       try {
-          currentConfig.value = parse(content)
+          let config = parse(content)
+          config = cleanConfig(config)
+          currentConfig.value = config
           // Also save to localStorage
-          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig.value))
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
       } catch (e) {
           console.warn("Failed to parse TOML", e)
       }
@@ -55,8 +79,10 @@ export const useConfigStore = defineStore('config', () => {
       if (content) {
           rawConfig.value = content
           try {
-              currentConfig.value = parse(content)
-              localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(currentConfig.value))
+              let config = parse(content)
+              config = cleanConfig(config)
+              currentConfig.value = config
+              localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config))
           } catch (e) {}
       }
     } catch (error) {
@@ -66,8 +92,9 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   function updateFromObject(obj: any) {
-      currentConfig.value = obj
-      rawConfig.value = stringify(obj)
+      const cleaned = cleanConfig(obj)
+      currentConfig.value = cleaned
+      rawConfig.value = stringify(cleaned)
   }
 
   // Initialize from storage
