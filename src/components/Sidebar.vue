@@ -70,7 +70,8 @@ const menuItems = [
 ];
 
 // Store refs
-const { cpuUsage, memoryUsage, startPolling, stopPolling } = storeToRefs(systemStatsStore);
+const { cpuUsage, memoryUsage, startPolling, stopPolling } =
+    storeToRefs(systemStatsStore);
 
 // Lifecycle hooks
 onMounted(() => {
@@ -131,7 +132,10 @@ function formatMemoryMB(value: number): string {
         <div class="system-stats">
             <div class="stat-item">
                 <div class="stat-header">
-                    <el-icon class="stat-icon" :style="{ color: getProgressColor(cpuUsage) }">
+                    <el-icon
+                        class="stat-icon"
+                        :style="{ color: getProgressColor(cpuUsage) }"
+                    >
                         <Cpu />
                     </el-icon>
                     <span class="stat-label">CPU</span>
@@ -140,10 +144,13 @@ function formatMemoryMB(value: number): string {
             </div>
             <div class="stat-item">
                 <div class="stat-header">
-                    <el-icon class="stat-icon" :style="{ color: getProgressColor(memoryUsage) }">
+                    <el-icon
+                        class="stat-icon"
+                        :style="{ color: getProgressColor(memoryUsage) }"
+                    >
                         <Monitor />
                     </el-icon>
-                    <span class="stat-label">内存</span>
+                    <span class="stat-label">RAM</span>
                 </div>
                 <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
             </div>
@@ -151,7 +158,9 @@ function formatMemoryMB(value: number): string {
 
         <div class="collapse-btn-wrapper">
             <el-tooltip
-                :content="isCollapse ? $t('common.expand') : $t('common.collapse')"
+                :content="
+                    isCollapse ? $t('common.expand') : $t('common.collapse')
+                "
                 placement="right"
                 :show-after="300"
                 :disabled="!isCollapse"
@@ -271,7 +280,6 @@ function formatMemoryMB(value: number): string {
     font-weight: 600;
     color: var(--el-text-color-primary);
     font-family: "SF Mono", "Monaco", "Consolas", monospace;
-    margin-left: 20px; /* Align with label */
 }
 
 @keyframes shake {
