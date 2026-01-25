@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useConfigStore } from "../stores/config";
 import { useThemeStore } from "../stores/theme";
-import { useUiStore } from "../stores/ui";
 import { storeToRefs } from "pinia";
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -19,10 +18,8 @@ import PageHeader from "../components/PageHeader.vue";
 
 const store = useConfigStore();
 const themeStore = useThemeStore();
-const uiStore = useUiStore();
 const { currentConfig, rawConfig } = storeToRefs(store);
 const { isDark } = storeToRefs(themeStore);
-const { isCollapsed } = storeToRefs(uiStore);
 const currentFile = ref("");
 const { locale } = useI18n();
 const showConfigPreview = ref(false);

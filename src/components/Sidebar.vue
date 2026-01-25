@@ -70,16 +70,15 @@ const menuItems = [
 ];
 
 // Store refs
-const { cpuUsage, memoryUsage, startPolling, stopPolling } =
-    storeToRefs(systemStatsStore);
+const { cpuUsage, memoryUsage } = storeToRefs(systemStatsStore);
 
 // Lifecycle hooks
 onMounted(() => {
-    startPolling();
+    systemStatsStore.startPolling();
 });
 
 onUnmounted(() => {
-    stopPolling();
+    systemStatsStore.stopPolling();
 });
 
 // Format percentage
@@ -92,11 +91,6 @@ function getProgressColor(usage: number): string {
     if (usage < 50) return "#67c23a"; // green
     if (usage < 80) return "#e6a23c"; // orange
     return "#f56c6c"; // red
-}
-
-// Format memory to MB
-function formatMemoryMB(value: number): string {
-    return `${(value / 1024).toFixed(0)} MB`;
 }
 </script>
 
@@ -129,7 +123,7 @@ function formatMemoryMB(value: number): string {
         </el-menu>
 
         <!-- System Stats -->
-        <div class="system-stats">
+        <div class="system-stats" :class="{ 'stats-collapsed': isCollapse }">
             <div class="stat-item">
                 <div class="stat-header">
                     <el-icon
@@ -242,7 +236,7 @@ function formatMemoryMB(value: number): string {
 }
 
 .system-stats {
-    padding: 12px;
+    padding: 8px;
     border-top: 1px solid var(--el-border-color);
     background: var(--el-fill-color-extra-light);
 }
@@ -250,8 +244,8 @@ function formatMemoryMB(value: number): string {
 .stat-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 2px;
+    margin-bottom: 6px;
 }
 
 .stat-item:last-child {
@@ -261,25 +255,42 @@ function formatMemoryMB(value: number): string {
 .stat-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .stat-icon {
-    font-size: 14px;
+    font-size: 12px;
     flex-shrink: 0;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--el-text-color-secondary);
 }
 
 .stat-value {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--el-text-color-primary);
     font-family: "SF Mono", "Monaco", "Consolas", monospace;
+}
+
+/* Collapsed state - smaller fonts */
+.system-stats.stats-collapsed {
+    padding: 6px;
+}
+
+.system-stats.stats-collapsed .stat-icon {
+    font-size: 10px;
+}
+
+.system-stats.stats-collapsed .stat-label {
+    font-size: 8px;
+}
+
+.system-stats.stats-collapsed .stat-value {
+    font-size: 8px;
 }
 
 @keyframes shake {

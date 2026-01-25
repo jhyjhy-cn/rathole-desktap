@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from "vue";
 import { useRatholeStore } from "../stores/rathole";
 import { useConfigStore } from "../stores/config";
 import { storeToRefs } from "pinia";
-import { open } from "@tauri-apps/plugin-dialog";
 import { ElMessage } from "element-plus";
 import { invoke } from "@tauri-apps/api/core";
 import PageHeader from "../components/PageHeader.vue";

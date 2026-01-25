@@ -4,6 +4,7 @@ use std::process::{Command, Child, Stdio};
 use std::io::{BufReader, BufRead, Write};
 use std::thread;
 use std::fs::{self, File, OpenOptions};
+use std::time::Duration;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
@@ -55,6 +56,14 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
 #[tauri::command]
 fn get_system_stats() -> Result<(f32, f32), String> {
     let mut sys = System::new_all();
+
+    // First refresh to initialize
+    sys.refresh_all();
+
+    // Wait a bit for CPU measurement
+    std::thread::sleep(Duration::from_millis(200));
+
+    // Second refresh to get actual CPU usage
     sys.refresh_all();
 
     // Get CPU usage (global_cpu_usage returns f32 percentage)
