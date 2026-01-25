@@ -8,7 +8,7 @@ use std::time::Duration;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
-use sysinfo::{System, Pid, ProcessesToUpdate};
+use sysinfo::{System, Pid};
 
 // Shared state to hold the child process
 struct RatholeState {
@@ -55,21 +55,21 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn get_system_stats() -> Result<(f32, f32), String> {
-    // Use new() instead of new_all() to avoid collecting all system info
-    let mut sys = System::new();
+    // Use new_all() to properly initialize CPU tracking
+    let mut sys = System::new_all();
 
     // Get current process PID
     let current_pid = std::process::id();
     let pid = Pid::from_u32(current_pid);
 
     // First refresh to initialize
-    sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+    sys.refresh_all();
 
     // Wait a bit for CPU measurement
-    std::thread::sleep(Duration::from_millis(200));
+    std::thread::sleep(Duration::from_millis(500));
 
     // Second refresh to get actual CPU usage
-    sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+    sys.refresh_all();
 
     // Get current process memory
     let memory_mb: f32 = sys.process(pid)
@@ -80,6 +80,9 @@ fn get_system_stats() -> Result<(f32, f32), String> {
     let cpu_usage: f32 = sys.process(pid)
         .map(|p| p.cpu_usage())
         .unwrap_or(0.0);
+
+    // Debug output
+    eprintln!("DEBUG: CPU usage = {}, Memory = {} MB", cpu_usage, memory_mb);
 
     Ok((cpu_usage, memory_mb))
 }
