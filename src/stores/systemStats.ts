@@ -26,10 +26,10 @@ export const useSystemStatsStore = defineStore('systemStats', () => {
     }
   }
 
-  // Start polling (every 2 seconds)
+  // Start polling (every 5 seconds to reduce CPU usage)
   let pollingInterval: number | null = null
 
-  function startPolling(interval = 2000) {
+  function startPolling(interval = 5000) {
     fetchStats()
     pollingInterval = window.setInterval(fetchStats, interval)
   }
