@@ -86,11 +86,23 @@ function formatPercent(value: number): string {
     return `${value.toFixed(1)}%`;
 }
 
-// Get progress bar color based on usage
-function getProgressColor(usage: number): string {
+// Format memory to MB
+function formatMemory(value: number): string {
+    return `${value.toFixed(0)} MB`;
+}
+
+// Get progress bar color based on CPU usage (percentage)
+function getCpuColor(usage: number): string {
     if (usage < 50) return "#67c23a"; // green
     if (usage < 80) return "#e6a23c"; // orange
     return "#f56c6c"; // red
+}
+
+// Get progress bar color based on memory usage (MB)
+function getMemoryColor(usage: number): string {
+    if (usage < 2048) return "#67c23a"; // < 2GB green
+    if (usage < 4096) return "#e6a23c"; // < 4GB orange
+    return "#f56c6c"; // >= 4GB red
 }
 </script>
 
@@ -128,7 +140,7 @@ function getProgressColor(usage: number): string {
                 <div class="stat-header">
                     <el-icon
                         class="stat-icon"
-                        :style="{ color: getProgressColor(cpuUsage) }"
+                        :style="{ color: getCpuColor(cpuUsage) }"
                     >
                         <Cpu />
                     </el-icon>
@@ -140,13 +152,13 @@ function getProgressColor(usage: number): string {
                 <div class="stat-header">
                     <el-icon
                         class="stat-icon"
-                        :style="{ color: getProgressColor(memoryUsage) }"
+                        :style="{ color: getMemoryColor(memoryUsage) }"
                     >
                         <Monitor />
                     </el-icon>
                     <span class="stat-label">RAM</span>
                 </div>
-                <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
+                <div class="stat-value">{{ formatMemory(memoryUsage) }}</div>
             </div>
         </div>
 

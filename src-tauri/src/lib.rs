@@ -69,16 +69,11 @@ fn get_system_stats() -> Result<(f32, f32), String> {
     // Get CPU usage (global_cpu_usage returns f32 percentage)
     let cpu_usage = sys.global_cpu_usage();
 
-    // Get memory usage (used / total * 100)
-    let total_memory = sys.total_memory();
+    // Get memory usage in MB
     let used_memory = sys.used_memory();
-    let memory_usage = if total_memory > 0 {
-        (used_memory as f32 / total_memory as f32) * 100.0
-    } else {
-        0.0
-    };
+    let memory_mb = (used_memory / 1024 / 1024) as f32;
 
-    Ok((cpu_usage, memory_usage))
+    Ok((cpu_usage, memory_mb))
 }
 
 #[tauri::command]
