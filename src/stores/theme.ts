@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
-  // Default to light mode (empty string or 'light'), but check localStorage
-  // Previous default was dark (via html class), now we want light default
+  // 默认为亮色模式（空字符串或 'light'），但检查 localStorage
+  // 之前的默认是暗色（通过 html 类），现在我们想要亮色默认
   const savedTheme = localStorage.getItem('rathole-theme') || 'light'
   const isDark = ref(savedTheme === 'dark')
 

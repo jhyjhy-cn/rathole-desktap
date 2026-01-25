@@ -26,13 +26,13 @@ const releases = ref<Release[]>([]);
 const downloading = ref<string>("");
 const downloadedVersions = ref<Set<string>>(new Set());
 
-// Load downloaded versions from localStorage and check installed version
+// 从 localStorage 加载已下载的版本并检查已安装的版本
 onMounted(async () => {
     const saved = localStorage.getItem("rathole-downloaded-versions");
     if (saved) {
         downloadedVersions.value = new Set(JSON.parse(saved));
     }
-    // Check installed version
+    // 检查已安装的版本
     await checkInstalledVersion();
     await fetchReleases();
 });
@@ -41,17 +41,17 @@ async function checkInstalledVersion() {
     try {
         const version = await invoke<string>("get_installed_version");
         if (version && version !== "unknown") {
-            // Add v prefix if not present (GitHub tags use v prefix)
+            // 如果不存在则添加 v 前缀（GitHub 标签使用 v 前缀）
             const normalizedVersion = version.startsWith("v") ? version : `v${version}`;
             downloadedVersions.value.add(normalizedVersion);
-            // Save to localStorage
+            // 保存到 localStorage
             localStorage.setItem(
                 "rathole-downloaded-versions",
                 JSON.stringify(Array.from(downloadedVersions.value))
             );
         }
     } catch (e) {
-        // No installed version, ignore
+        // 没有已安装的版本，忽略
         console.debug("No installed rathole found");
     }
 }
@@ -69,7 +69,7 @@ async function fetchReleases() {
 
         const data = await response.json();
 
-        // Check if data is an array
+        // 检查数据是否为数组
         if (!Array.isArray(data)) {
             console.error("Unexpected API response:", data);
             releases.value = [];
@@ -113,7 +113,7 @@ async function startDownload(release: Release) {
             version: release.name,
         });
         ElMessage.success(t("download.success", { path }));
-        // Add to downloaded versions
+        // 添加到已下载版本
         downloadedVersions.value.add(release.name);
         localStorage.setItem(
             "rathole-downloaded-versions",

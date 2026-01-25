@@ -6,15 +6,15 @@ import { listen } from '@tauri-apps/api/event'
 export const useRatholeStore = defineStore('rathole', () => {
   const isRunning = ref(false)
   const logs = ref<string[]>([])
-  const configPath = ref('') // Store current config path
+  const configPath = ref('') // 保存当前配置路径
 
-  // Load logs from file on init
+  // 初始化时从文件加载日志
   async function loadLogsFromFile() {
     try {
       const fileLogs = await invoke<string[]>('read_logs', { lines: 1000 })
-      // Remove timestamps from file logs for display
+      // 移除文件日志中的时间戳以供显示
       const cleanLogs = fileLogs.map((log: string) => {
-        // Remove timestamp prefix like [2026-01-25 13:14:15.123]
+        // 移除时间戳前缀，如 [2026-01-25 13:14:15.123]
         return log.replace(/^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\]\s*/, '')
       })
       logs.value = cleanLogs
@@ -23,7 +23,7 @@ export const useRatholeStore = defineStore('rathole', () => {
     }
   }
 
-  // Listen for logs
+  // 监听日志
   try {
       listen<string>('rathole-log', (event) => {
         logs.value.push(event.payload)
@@ -35,7 +35,7 @@ export const useRatholeStore = defineStore('rathole', () => {
       console.warn("Failed to setup listener", e);
   }
 
-  // Check if rathole is already running on init
+  // 初始化时检查 rathole 是否已在运行
   async function checkStatus() {
     try {
       const running = await invoke<boolean>('is_rathole_running')
@@ -43,22 +43,22 @@ export const useRatholeStore = defineStore('rathole', () => {
       if (running) {
         logs.value.push('--- Service is running (detected on startup) ---')
       }
-      // Load logs from file regardless of running status
+      // 无论运行状态如何都从文件加载日志
       await loadLogsFromFile()
     } catch (e) {
       console.warn('Failed to check rathole status:', e)
-      // Still try to load logs
+      // 仍然尝试加载日志
       await loadLogsFromFile()
     }
   }
 
-  // Initialize status check and load logs
+  // 初始化状态检查并加载日志
   checkStatus()
 
   async function start(path: string, isServer: boolean) {
     try {
       const result = await invoke('start_rathole', { configPath: path, isServer })
-      // Check if "Already running" was returned
+      // 检查是否返回 "Already running"
       if (result === 'Already running') {
         isRunning.value = true
         logs.value.push('--- Service is already running ---')

@@ -2,11 +2,11 @@ import { createI18n } from 'vue-i18n'
 import zhCN from './locales/zh-CN'
 import enUS from './locales/en-US'
 
-// Get saved language from local storage or default to zh-CN
+// 从本地存储获取保存的语言或默认为 zh-CN
 const savedLocale = localStorage.getItem('rathole-locale') || 'zh-CN'
 
 const i18n = createI18n({
-  legacy: false, // Use Composition API
+  legacy: false, // 使用 Composition API
   locale: savedLocale,
   fallbackLocale: 'en-US',
   messages: {

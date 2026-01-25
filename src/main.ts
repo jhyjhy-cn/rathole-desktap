@@ -8,7 +8,7 @@ import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-// Element Plus Locale
+// Element Plus 语言环境
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 const app = createApp(App)

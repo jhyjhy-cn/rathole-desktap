@@ -16,13 +16,13 @@ const { t } = useI18n();
 
 const selectedVersion = ref("");
 
-// Check if config is ready
+// 检查配置是否就绪
 const hasConfig = computed(() => {
     return currentConfig.value?.client?.remote_addr &&
            Object.keys(currentConfig.value?.client?.services || {}).length > 0;
 });
 
-// Load selected version from localStorage
+// 从 localStorage 加载选定的版本
 onMounted(() => {
     const saved = localStorage.getItem("rathole-selected-version");
     if (saved) {
@@ -37,27 +37,27 @@ async function selectAndStart() {
         return;
     }
 
-    // Check if version is selected
+    // 检查是否选择了版本
     if (!selectedVersion.value) {
         ElMessage.warning("请先在设置页面选择 Rathole 版本");
         return;
     }
 
-    // Check if config is ready
+    // 检查配置是否就绪
     if (!hasConfig.value) {
         ElMessage.warning("请先在代理配置页面添加服务");
         return;
     }
 
     try {
-        // Fix permissions first
+        // 首先修复权限
         try {
             await invoke("fix_rathole_permissions");
         } catch (e) {
             console.warn("Failed to fix permissions:", e);
         }
 
-        // Generate temp config and start
+        // 生成临时配置并启动
         const configPath = await invoke<string>("save_temp_config", {
             config: currentConfig.value,
         });

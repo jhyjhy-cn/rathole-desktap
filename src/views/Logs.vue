@@ -16,7 +16,7 @@ const pausedLogs = ref<string[]>([]);
 const isPaused = ref(false);
 const isLoading = ref(false);
 
-// Parse log level from log line
+// 从日志行解析日志级别
 function getLogLevel(log: string): string {
     const upperLog = log.toUpperCase();
     if (upperLog.includes("ERROR") || upperLog.includes("[ERR]"))
@@ -26,7 +26,7 @@ function getLogLevel(log: string): string {
     return "default";
 }
 
-// Get log color based on level
+// 根据级别获取日志颜色
 function getLogColor(level: string): string {
     switch (level) {
         case "error":
@@ -40,7 +40,7 @@ function getLogColor(level: string): string {
     }
 }
 
-// Highlight search matches
+// 高亮搜索匹配
 function highlightMatch(text: string, query: string): string {
     if (!query) return text;
     const regex = new RegExp(
@@ -50,7 +50,7 @@ function highlightMatch(text: string, query: string): string {
     return text.replace(regex, "<mark>$1</mark>");
 }
 
-// Filtered and highlighted logs
+// 过滤和高亮的日志
 const filteredLogs = computed(() => {
     const logList = isPaused.value ? pausedLogs.value : logs.value;
     if (!searchQuery.value) return logList;
@@ -59,7 +59,7 @@ const filteredLogs = computed(() => {
     return logList.filter((log) => log.toLowerCase().includes(query));
 });
 
-// Watch for new logs
+// 监听新日志
 watch(
     logs,
     () => {
@@ -72,14 +72,14 @@ watch(
     { deep: true },
 );
 
-// Clear logs
+// 清空日志
 function clearLogs() {
     logs.value = [];
     pausedLogs.value = [];
     ElMessage.success("日志已清空");
 }
 
-// Toggle pause
+// 切换暂停
 function togglePause() {
     isPaused.value = !isPaused.value;
     if (isPaused.value) {
@@ -89,7 +89,7 @@ function togglePause() {
     }
 }
 
-// Export logs
+// 导出日志
 function exportLogs() {
     const logText = logs.value.join("\n");
     const blob = new Blob([logText], { type: "text/plain" });
@@ -102,7 +102,7 @@ function exportLogs() {
     ElMessage.success("日志已导出");
 }
 
-// Refresh logs from file
+// 从文件刷新日志
 async function refreshLogs() {
     isLoading.value = true;
     try {

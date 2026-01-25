@@ -24,29 +24,29 @@ const currentFile = ref("");
 const { locale } = useI18n();
 const showConfigPreview = ref(false);
 
-// Rathole version settings
+// Rathole 版本设置
 const selectedVersion = ref("");
 const downloadedVersions = ref<string[]>([]);
 
-// Client config - use refs for proper v-model binding
+// 客户端配置 - 使用 refs 以便正确的 v-model 绑定
 const remoteAddr = ref("");
 
-// Sync with store when config changes
+// 配置更改时与 store 同步
 watch(
     () => currentConfig.value?.client?.remote_addr || "",
     (val) => (remoteAddr.value = val),
     { immediate: true }
 );
 
-// Save client config to store
+// 保存客户端配置到 store
 function saveClientConfig() {
     const cfg = JSON.parse(JSON.stringify(currentConfig.value || {}));
     if (!cfg.client) cfg.client = {};
-    // Remove old token from client level if exists
+    // 如果存在，从客户端级别移除旧的 token
     if (cfg.client.token) {
         delete cfg.client.token;
     }
-    // Remove old server_addr if exists
+    // 如果存在，移除旧的 server_addr
     if (cfg.client.server_addr) {
         delete cfg.client.server_addr;
     }
@@ -54,7 +54,7 @@ function saveClientConfig() {
     store.updateFromObject(cfg);
 }
 
-// Load settings from localStorage
+// 从 localStorage 加载设置
 onMounted(() => {
     const savedVersion = localStorage.getItem("rathole-selected-version");
     if (savedVersion) {
@@ -98,7 +98,7 @@ function handleVersionChange(val: string) {
     localStorage.setItem("rathole-selected-version", val);
 }
 
-// Copy config to clipboard
+// 复制配置到剪贴板
 async function copyConfig() {
     try {
         await navigator.clipboard.writeText(rawConfig.value);
@@ -108,7 +108,7 @@ async function copyConfig() {
     }
 }
 
-// Toggle config preview
+// 切换配置预览
 function toggleConfigPreview() {
     showConfigPreview.value = !showConfigPreview.value;
 }

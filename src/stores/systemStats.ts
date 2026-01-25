@@ -12,7 +12,7 @@ export const useSystemStatsStore = defineStore('systemStats', () => {
   const memoryUsage = ref(0)
   const isLoading = ref(false)
 
-  // Fetch system stats
+  // 获取系统统计信息
   async function fetchStats() {
     isLoading.value = true
     try {
@@ -26,7 +26,7 @@ export const useSystemStatsStore = defineStore('systemStats', () => {
     }
   }
 
-  // Start polling (every 5 seconds to reduce CPU usage)
+  // 开始轮询（每 5 秒以降低 CPU 使用率）
   let pollingInterval: number | null = null
 
   function startPolling(interval = 5000) {

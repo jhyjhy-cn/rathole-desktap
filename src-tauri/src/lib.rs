@@ -10,7 +10,7 @@ use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
 use sysinfo::{System, Pid};
 
-// Shared state to hold the child process
+// 用于保存子进程的共享状态
 struct RatholeState {
     process: Mutex<Option<Child>>,
 }
@@ -43,7 +43,7 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
         .filter_map(|line| line.ok())
         .collect();
 
-    // Return last N lines
+    // 返回最后 N 行
     let start = if all_lines.len() > lines {
         all_lines.len() - lines
     } else {
@@ -55,33 +55,33 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn get_system_stats() -> Result<(f32, f32), String> {
-    // Use new_all() to properly initialize CPU tracking
+    // 使用 new_all() 正确初始化 CPU 追踪
     let mut sys = System::new_all();
 
-    // Get current process PID
+    // 获取当前进程 PID
     let current_pid = std::process::id();
     let pid = Pid::from_u32(current_pid);
 
-    // First refresh to initialize
+    // 首次刷新以初始化
     sys.refresh_all();
 
-    // Wait a bit for CPU measurement
+    // 等待一小段时间以测量 CPU
     std::thread::sleep(Duration::from_millis(500));
 
-    // Second refresh to get actual CPU usage
+    // 第二次刷新以获取实际 CPU 使用率
     sys.refresh_all();
 
-    // Get current process memory
+    // 获取当前进程内存
     let memory_mb: f32 = sys.process(pid)
         .map(|p| (p.memory() / 1024 / 1024) as f32)
         .unwrap_or(0.0);
 
-    // Get current process CPU usage
+    // 获取当前进程 CPU 使用率
     let cpu_usage: f32 = sys.process(pid)
         .map(|p| p.cpu_usage())
         .unwrap_or(0.0);
 
-    // Debug output
+    // 调试输出
     eprintln!("DEBUG: CPU usage = {}, Memory = {} MB", cpu_usage, memory_mb);
 
     Ok((cpu_usage, memory_mb))
@@ -99,11 +99,11 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
 
     let url = format!("https://github.com/rapiz1/rathole/releases/download/{}/rathole-{}.zip", version, target);
 
-    // Download
+    // 下载
     let response = reqwest::get(&url).await.map_err(|e| e.to_string())?;
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
 
-    // Save zip
+    // 保存 zip 文件
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
@@ -111,7 +111,7 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
     let zip_path = app_dir.join("rathole.zip");
     fs::write(&zip_path, bytes).map_err(|e| e.to_string())?;
 
-    // Unzip
+    // 解压
     let file = fs::File::open(&zip_path).map_err(|e| e.to_string())?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
 
@@ -132,10 +132,10 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
         }
     }
 
-    // Cleanup
+    // 清理
     let _ = fs::remove_file(zip_path);
 
-    // Set executable permissions on Unix-like systems
+    // 在类 Unix 系统上设置可执行权限
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -143,12 +143,12 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
         let exe_path = app_dir.join(exe_name);
         if exe_path.exists() {
             let mut perms = fs::metadata(&exe_path).map_err(|e| e.to_string())?.permissions();
-            perms.set_mode(perms.mode() | 0o111); // Add executable bit
+            perms.set_mode(perms.mode() | 0o111); // 添加可执行位
             fs::set_permissions(&exe_path, perms).map_err(|e| e.to_string())?;
         }
     }
 
-    // Return path
+    // 返回路径
     let exe_name = if cfg!(target_os = "windows") { "rathole.exe" } else { "rathole" };
     Ok(app_dir.join(exe_name).to_string_lossy().to_string())
 }
@@ -157,40 +157,40 @@ async fn download_rathole(app: AppHandle, version: String) -> Result<String, Str
 fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path: String, is_server: bool) -> Result<String, String> {
     let mut process_guard = state.process.lock().map_err(|e| e.to_string())?;
 
-    // Check if we think it's already running
+    // 检查是否已在运行
     if process_guard.is_some() {
-        // Verify if actually running by checking child process
+        // 通过检查子进程验证是否实际运行
         if let Some(child) = process_guard.as_mut() {
-            // try_wait returns Ok(Some(exit_status)) if exited
-            // returns Ok(None) if still running
+            // 如果进程已退出，try_wait 返回 Ok(Some(exit_status))
+            // 如果仍在运行，返回 Ok(None)
             match child.try_wait() {
                 Ok(Some(_)) => {
-                    // Process exited, clean up
+                    // 进程已退出，清理
                     *process_guard = None;
                 }
                 Ok(None) => {
-                    // Still running
+                    // 仍在运行
                     return Ok("Already running".to_string());
                 }
                 Err(_) => {
-                    // Error checking, assume not running
+                    // 检查出错，假设未运行
                     *process_guard = None;
                 }
             }
         }
     }
 
-    // Get log file path
+    // 获取日志文件路径
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
     }
 
-    // Create log file with current date
+    // 使用当前日期创建日志文件
     let date_str = Local::now().format("%Y-%m-%d").to_string();
     let log_path = app_dir.join(format!("rathole-{}.log", date_str));
 
-    // Check for local binary in app data dir
+    // 在应用数据目录中查找本地二进制文件
     let exe_name = if cfg!(target_os = "windows") { "rathole.exe" } else { "rathole" };
     let local_bin = app_dir.join(exe_name);
 
@@ -202,7 +202,7 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
 
     let mut cmd = Command::new(cmd_path);
 
-    // On Windows, create_no_window to avoid popup console
+    // 在 Windows 上，避免弹出控制台
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -213,7 +213,7 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
     if is_server {
         cmd.arg("--server");
     } else {
-        cmd.arg("--client"); // Optional if config has [client]
+        cmd.arg("--client"); // 如果配置有 [client] 则可选
     }
     cmd.arg(&config_path);
 
@@ -242,10 +242,10 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
                             let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                             let log_line = format!("[{}] {}", timestamp, l);
 
-                            // Emit to frontend
+                            // 发送到前端
                             let _ = app_handle_out.emit("rathole-log", &l);
 
-                            // Write to file
+                            // 写入文件
                             if let Some(ref mut file) = log_file {
                                 let _ = writeln!(file, "{}", log_line);
                                 let _ = file.flush();
@@ -270,10 +270,10 @@ fn start_rathole(app: AppHandle, state: tauri::State<RatholeState>, config_path:
                             let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f").to_string();
                             let log_line = format!("[{}] [ERR] {}", timestamp, l);
 
-                            // Emit to frontend
+                            // 发送到前端
                             let _ = app_handle_err.emit("rathole-log", format!("[ERR] {}", l));
 
-                            // Write to file
+                            // 写入文件
                             if let Some(ref mut file) = log_file {
                                 let _ = writeln!(file, "{}", log_line);
                                 let _ = file.flush();
@@ -300,7 +300,7 @@ fn get_installed_version(app: AppHandle) -> Result<String, String> {
         return Err("No installed rathole found".to_string());
     }
 
-    // Try to get version by running rathole --version
+    // 尝试通过运行 rathole --version 获取版本
     let output = Command::new(&local_bin)
         .arg("--version")
         .output()
@@ -308,13 +308,13 @@ fn get_installed_version(app: AppHandle) -> Result<String, String> {
 
     if output.status.success() {
         let version_str = String::from_utf8_lossy(&output.stdout);
-        // Parse version from output like "rathole 1.2.3"
+        // 从输出如 "rathole 1.2.3" 中解析版本
         if let Some(v) = version_str.split_whitespace().nth(1) {
             return Ok(v.to_string());
         }
     }
 
-    // Fallback: check if file exists
+    // 备选方案：检查文件是否存在
     Ok("unknown".to_string())
 }
 
@@ -322,16 +322,16 @@ fn get_installed_version(app: AppHandle) -> Result<String, String> {
 fn save_temp_config(app: AppHandle, config: serde_json::Value) -> Result<String, String> {
     use toml::to_string_pretty;
 
-    // Create app data dir if not exists
+    // 如果应用数据目录不存在则创建
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
     }
 
-    // Convert JSON to TOML
+    // 将 JSON 转换为 TOML
     let toml_str = to_string_pretty(&config).map_err(|e| e.to_string())?;
 
-    // Save to temp file
+    // 保存到临时文件
     let temp_path = app_dir.join("client_temp.toml");
     fs::write(&temp_path, toml_str).map_err(|e| e.to_string())?;
 
@@ -349,7 +349,7 @@ fn fix_rathole_permissions(app: AppHandle) -> Result<String, String> {
 
         if exe_path.exists() {
             let mut perms = fs::metadata(&exe_path).map_err(|e| e.to_string())?.permissions();
-            perms.set_mode(perms.mode() | 0o111); // Add executable bit (rwxrwxrwx)
+            perms.set_mode(perms.mode() | 0o111); // 添加可执行位 (rwxrwxrwx)
             fs::set_permissions(&exe_path, perms).map_err(|e| e.to_string())?;
             return Ok("Permissions fixed".to_string());
         }
@@ -412,7 +412,7 @@ pub fn run() {
         .setup(|app| {
             let app_handle = app.handle().clone();
 
-            // Create menu items using AppHandle
+            // 使用 AppHandle 创建菜单项
             let show_i = MenuItem::with_id(&app_handle, "show", "显示窗口", true, None::<&str>)?;
             let hide_i = MenuItem::with_id(&app_handle, "hide", "隐藏窗口", true, None::<&str>)?;
             let separator1 = tauri::menu::PredefinedMenuItem::separator(&app_handle)?;
@@ -438,7 +438,7 @@ pub fn run() {
                             }
                         }
                         "quit" => {
-                            // Stop rathole if running before exit
+                            // 退出前停止 rathole（如果正在运行）
                             if let Some(state) = handle.try_state::<RatholeState>() {
                                 if let Ok(mut guard) = state.process.lock() {
                                     if let Some(mut child) = guard.take() {

@@ -72,7 +72,7 @@ const menuItems = [
 // Store refs
 const { cpuUsage, memoryUsage } = storeToRefs(systemStatsStore);
 
-// Lifecycle hooks
+// 生命周期钩子
 onMounted(() => {
     systemStatsStore.startPolling();
 });
@@ -81,28 +81,28 @@ onUnmounted(() => {
     systemStatsStore.stopPolling();
 });
 
-// Format percentage
+// 格式化百分比
 function formatPercent(value: number): string {
     return `${value.toFixed(1)}%`;
 }
 
-// Format memory to MB
+// 格式化内存为 MB
 function formatMemory(value: number): string {
     return `${value.toFixed(0)} MB`;
 }
 
-// Get progress bar color based on CPU usage (percentage)
+// 根据 CPU 使用率获取进度条颜色（百分比）
 function getCpuColor(usage: number): string {
-    if (usage < 5) return "#67c23a"; // < 5% green
-    if (usage < 15) return "#e6a23c"; // < 15% orange
-    return "#f56c6c"; // >= 15% red
+    if (usage < 5) return "#67c23a"; // < 5% 绿色
+    if (usage < 15) return "#e6a23c"; // < 15% 橙色
+    return "#f56c6c"; // >= 15% 红色
 }
 
-// Get progress bar color based on memory usage (MB)
+// 根据内存使用量获取进度条颜色（MB）
 function getMemoryColor(usage: number): string {
-    if (usage < 200) return "#67c23a"; // < 200MB green
-    if (usage < 500) return "#e6a23c"; // < 500MB orange
-    return "#f56c6c"; // >= 500MB red
+    if (usage < 200) return "#67c23a"; // < 200MB 绿色
+    if (usage < 500) return "#e6a23c"; // < 500MB 橙色
+    return "#f56c6c"; // >= 500MB 红色
 }
 </script>
 
