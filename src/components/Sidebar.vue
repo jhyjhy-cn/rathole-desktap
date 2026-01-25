@@ -129,17 +129,23 @@ function formatMemoryMB(value: number): string {
 
         <!-- System Stats -->
         <div class="system-stats">
-            <div class="stat-row">
-                <el-icon class="stat-icon" :style="{ color: getProgressColor(cpuUsage) }">
-                    <Cpu />
-                </el-icon>
-                <span class="stat-text">CPU: {{ formatPercent(cpuUsage) }}</span>
+            <div class="stat-item">
+                <div class="stat-icon-row">
+                    <el-icon class="stat-icon" :style="{ color: getProgressColor(cpuUsage) }">
+                        <Cpu />
+                    </el-icon>
+                </div>
+                <div class="stat-label">CPU</div>
+                <div class="stat-value">{{ formatPercent(cpuUsage) }}</div>
             </div>
-            <div class="stat-row">
-                <el-icon class="stat-icon" :style="{ color: getProgressColor(memoryUsage) }">
-                    <Monitor />
-                </el-icon>
-                <span class="stat-text">内存: {{ formatPercent(memoryUsage) }}</span>
+            <div class="stat-item">
+                <div class="stat-icon-row">
+                    <el-icon class="stat-icon" :style="{ color: getProgressColor(memoryUsage) }">
+                        <Monitor />
+                    </el-icon>
+                </div>
+                <div class="stat-label">内存</div>
+                <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
             </div>
         </div>
 
@@ -230,27 +236,37 @@ function formatMemoryMB(value: number): string {
     padding: 12px;
     border-top: 1px solid var(--el-border-color);
     background: var(--el-fill-color-extra-light);
+    display: flex;
+    justify-content: space-around;
 }
 
-.stat-row {
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-icon-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.stat-row:last-child {
-    margin-bottom: 0;
+    justify-content: center;
 }
 
 .stat-icon {
-    font-size: 14px;
-    flex-shrink: 0;
+    font-size: 16px;
 }
 
-.stat-text {
-    font-size: 12px;
+.stat-label {
+    font-size: 11px;
     font-weight: 500;
+    color: var(--el-text-color-secondary);
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 12px;
+    font-weight: 600;
     color: var(--el-text-color-primary);
     font-family: "SF Mono", "Monaco", "Consolas", monospace;
 }
