@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import {
     Menu as IconMenu,
     Setting,
@@ -9,14 +9,18 @@ import {
     House,
     DArrowLeft,
     DArrowRight,
+    Cpu,
 } from "@element-plus/icons-vue";
 
 import { useRouter, useRoute } from "vue-router";
 import { useUiStore } from "../stores/ui";
+import { useSystemStatsStore } from "../stores/systemStats";
+import { storeToRefs } from "pinia";
 
 const uiStore = useUiStore();
 const router = useRouter();
 const route = useRoute();
+const systemStatsStore = useSystemStatsStore();
 
 const isCollapse = computed(() => uiStore.isCollapsed);
 
@@ -64,6 +68,35 @@ const menuItems = [
     { index: "5", icon: Monitor, title: "sidebar.logs" },
     { index: "6", icon: InfoFilled, title: "sidebar.about" },
 ];
+
+// Store refs
+const { cpuUsage, memoryUsage, startPolling, stopPolling } = storeToRefs(systemStatsStore);
+
+// Lifecycle hooks
+onMounted(() => {
+    startPolling();
+});
+
+onUnmounted(() => {
+    stopPolling();
+});
+
+// Format percentage
+function formatPercent(value: number): string {
+    return `${value.toFixed(1)}%`;
+}
+
+// Get progress bar color based on usage
+function getProgressColor(usage: number): string {
+    if (usage < 50) return "#67c23a"; // green
+    if (usage < 80) return "#e6a23c"; // orange
+    return "#f56c6c"; // red
+}
+
+// Format memory to MB
+function formatMemoryMB(value: number): string {
+    return `${(value / 1024).toFixed(0)} MB`;
+}
 </script>
 
 <template>
@@ -93,6 +126,43 @@ const menuItems = [
                 </el-menu-item>
             </el-tooltip>
         </el-menu>
+
+        <!-- System Stats -->
+        <div class="system-stats" v-if="!isCollapse">
+            <div class="stat-item">
+                <div class="stat-header">
+                    <el-icon><Cpu /></el-icon>
+                    <span class="stat-label">CPU</span>
+                </div>
+                <div class="stat-bar">
+                    <div
+                        class="stat-progress"
+                        :style="{
+                            width: formatPercent(cpuUsage),
+                            backgroundColor: getProgressColor(cpuUsage)
+                        }"
+                    ></div>
+                </div>
+                <div class="stat-value">{{ formatPercent(cpuUsage) }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-header">
+                    <el-icon><Monitor /></el-icon>
+                    <span class="stat-label">内存</span>
+                </div>
+                <div class="stat-bar">
+                    <div
+                        class="stat-progress"
+                        :style="{
+                            width: formatPercent(memoryUsage),
+                            backgroundColor: getProgressColor(memoryUsage)
+                        }"
+                    ></div>
+                </div>
+                <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
+            </div>
+        </div>
+
         <div class="collapse-btn-wrapper">
             <el-tooltip
                 :content="isCollapse ? $t('common.expand') : $t('common.collapse')"
@@ -169,15 +239,65 @@ const menuItems = [
 }
 
 .collapse-btn-wrapper {
-    height: 60px;
+    padding: 12px 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-top: 1px solid var(--el-border-color);
 }
 
-.collapse-btn {
-    transition: all 0.3s ease;
+.system-stats {
+    padding: 12px 16px;
+    border-top: 1px solid var(--el-border-color);
+    background: var(--el-fill-color-extra-light);
+}
+
+.system-stats .stat-item {
+    margin-bottom: 12px;
+}
+
+.system-stats .stat-item:last-child {
+    margin-bottom: 0;
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.stat-header .el-icon {
+    font-size: 14px;
+    color: var(--el-color-primary);
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--el-text-color-secondary);
+}
+
+.stat-bar {
+    height: 4px;
+    background: var(--el-border-color-light);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.stat-progress {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.stat-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    text-align: right;
+    font-family: "SF Mono", "Monaco", "Consolas", monospace;
 }
 
 @keyframes shake {

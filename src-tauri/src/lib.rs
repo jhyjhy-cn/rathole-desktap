@@ -7,6 +7,7 @@ use std::fs::{self, File, OpenOptions};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use chrono::Local;
+use sysinfo::System;
 
 // Shared state to hold the child process
 struct RatholeState {
@@ -49,6 +50,26 @@ fn read_logs(app: AppHandle, lines: usize) -> Result<Vec<String>, String> {
     };
 
     Ok(all_lines[start..].to_vec())
+}
+
+#[tauri::command]
+fn get_system_stats() -> Result<(f32, f32), String> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    // Get CPU usage (overall)
+    let cpu_usage = sys.global_cpu_usage();
+
+    // Get memory usage (used / total * 100)
+    let total_memory = sys.total_memory();
+    let used_memory = sys.used_memory();
+    let memory_usage = if total_memory > 0 {
+        (used_memory as f32 / total_memory as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    Ok((cpu_usage, memory_usage))
 }
 
 #[tauri::command]
@@ -370,7 +391,8 @@ pub fn run() {
             fix_rathole_permissions,
             is_rathole_running,
             toggle_window,
-            hide_window
+            hide_window,
+            get_system_stats
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
