@@ -128,38 +128,18 @@ function formatMemoryMB(value: number): string {
         </el-menu>
 
         <!-- System Stats -->
-        <div class="system-stats" v-if="!isCollapse">
-            <div class="stat-item">
-                <div class="stat-header">
-                    <el-icon><Cpu /></el-icon>
-                    <span class="stat-label">CPU</span>
-                </div>
-                <div class="stat-bar">
-                    <div
-                        class="stat-progress"
-                        :style="{
-                            width: formatPercent(cpuUsage),
-                            backgroundColor: getProgressColor(cpuUsage)
-                        }"
-                    ></div>
-                </div>
-                <div class="stat-value">{{ formatPercent(cpuUsage) }}</div>
+        <div class="system-stats">
+            <div class="stat-row">
+                <el-icon class="stat-icon" :style="{ color: getProgressColor(cpuUsage) }">
+                    <Cpu />
+                </el-icon>
+                <span class="stat-text">CPU: {{ formatPercent(cpuUsage) }}</span>
             </div>
-            <div class="stat-item">
-                <div class="stat-header">
-                    <el-icon><Monitor /></el-icon>
-                    <span class="stat-label">内存</span>
-                </div>
-                <div class="stat-bar">
-                    <div
-                        class="stat-progress"
-                        :style="{
-                            width: formatPercent(memoryUsage),
-                            backgroundColor: getProgressColor(memoryUsage)
-                        }"
-                    ></div>
-                </div>
-                <div class="stat-value">{{ formatPercent(memoryUsage) }}</div>
+            <div class="stat-row">
+                <el-icon class="stat-icon" :style="{ color: getProgressColor(memoryUsage) }">
+                    <Monitor />
+                </el-icon>
+                <span class="stat-text">内存: {{ formatPercent(memoryUsage) }}</span>
             </div>
         </div>
 
@@ -247,56 +227,31 @@ function formatMemoryMB(value: number): string {
 }
 
 .system-stats {
-    padding: 12px 16px;
+    padding: 12px;
     border-top: 1px solid var(--el-border-color);
     background: var(--el-fill-color-extra-light);
 }
 
-.system-stats .stat-item {
-    margin-bottom: 12px;
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
-.system-stats .stat-item:last-child {
+.stat-row:last-child {
     margin-bottom: 0;
 }
 
-.stat-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-}
-
-.stat-header .el-icon {
+.stat-icon {
     font-size: 14px;
-    color: var(--el-color-primary);
+    flex-shrink: 0;
 }
 
-.stat-label {
+.stat-text {
     font-size: 12px;
     font-weight: 500;
-    color: var(--el-text-color-secondary);
-}
-
-.stat-bar {
-    height: 4px;
-    background: var(--el-border-color-light);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 4px;
-}
-
-.stat-progress {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s ease, background-color 0.3s ease;
-}
-
-.stat-value {
-    font-size: 11px;
-    font-weight: 600;
     color: var(--el-text-color-primary);
-    text-align: right;
     font-family: "SF Mono", "Monaco", "Consolas", monospace;
 }
 

@@ -57,7 +57,7 @@ fn get_system_stats() -> Result<(f32, f32), String> {
     let mut sys = System::new_all();
     sys.refresh_all();
 
-    // Get CPU usage (overall)
+    // Get CPU usage (global_cpu_usage returns f32 percentage)
     let cpu_usage = sys.global_cpu_usage();
 
     // Get memory usage (used / total * 100)
